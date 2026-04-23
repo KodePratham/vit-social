@@ -1,19 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --fb-blue: #3b5998;
+  --fb-bg: #e7ebf2;
+  --fb-text: #0e385f;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--fb-bg);
+  --color-foreground: #1c1e21;
+  --font-sans: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
+  --font-mono: "Lucida Console", "Courier New", monospace;
 }
 
 body {
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
-  background-color: #ffffff;
+  color: #1c1e21;
+  font-family: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
+  background-color: #e7ebf2;
+}
+
+a {
+  color: #385898;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+::selection {
+  background: #b3d4fc;
+  color: inherit;
 }
