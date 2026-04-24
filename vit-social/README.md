@@ -84,3 +84,10 @@ This app currently allows only users with emails ending in `@vit.edu`.
 - If email is not `@vit.edu`, the user is immediately signed out.
 
 Important: client-side checks improve UX but are not a full security boundary. For production-grade enforcement, also enforce domain restrictions in your backend policies and auth rules.
+
+## Deploy
+
+This repo supports two targets. Use the guide that matches your host:
+
+- [Cloudflare Workers (OpenNext)](./README.cloudflare.md) — build must run `opennextjs-cloudflare`, not plain `next build`.
+- [Vercel](./README.vercel.md) — standard Next.js build.
