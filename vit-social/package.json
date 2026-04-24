@@ -5,8 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:cloudflare": "opennextjs-cloudflare build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && wrangler deploy",
+    "upload:version": "opennextjs-cloudflare build && wrangler versions upload"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
