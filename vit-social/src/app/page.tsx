@@ -1,8 +1,13 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+
+const LANDING_IMAGE_URL =
+  "https://image-static.collegedunia.com/public/reviewPhotos/1150994/Screenshot%202025-11-29%20121734.png";
 
 const ALLOWED_DOMAIN = "vit.edu";
 
@@ -119,8 +124,8 @@ export default function Home() {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         queryParams: {
           hd: ALLOWED_DOMAIN,
           prompt: "select_account",
@@ -164,14 +169,37 @@ export default function Home() {
       </header>
 
       <main className="mx-auto flex w-full max-w-[980px] flex-col items-stretch justify-center gap-0 px-2 pb-20 pt-10 sm:px-4 sm:pt-14 md:flex-row md:items-start md:pr-6">
-        <div className="min-w-0 flex-1 pl-0 pr-0 sm:pl-1 md:pr-6">
-          <h1
-            className="m-0 max-w-[40rem] text-[1.1rem] font-bold leading-tight sm:text-[1.2rem] md:pr-4"
-            style={{ color: "#0E385F" }}
-          >
-            vit.social helps you connect and share with the people in your life at VIT.
-          </h1>
-          <div className="mt-2 hidden h-px w-full max-w-md bg-[#9CB4D2]/60 sm:block" />
+        <div className="flex min-w-0 flex-1 flex-col gap-4 pl-0 pr-0 sm:pl-1 sm:flex-row sm:items-start md:pr-6">
+          <div className="relative w-full shrink-0 overflow-hidden rounded border border-[#BDC7D8] bg-white shadow-sm sm:max-w-[min(100%,18rem)] md:max-w-[14rem]">
+            <Image
+              src={LANDING_IMAGE_URL}
+              alt="Campus preview"
+              width={560}
+              height={420}
+              className="h-auto w-full object-cover object-top"
+              sizes="(min-width: 640px) 14rem, 100vw"
+              priority
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1
+              className="m-0 max-w-[40rem] text-[1.1rem] font-bold leading-tight sm:text-[1.2rem] md:pr-4"
+              style={{ color: "#0E385F" }}
+            >
+              vit.social helps you connect and share with the people in your life at VIT.
+            </h1>
+            <div className="mt-2 hidden h-px w-full max-w-md bg-[#9CB4D2]/60 sm:block" />
+            {user ? (
+              <p className="mt-3 text-sm">
+                <Link
+                  href="/dashboard"
+                  className="font-semibold text-[#385898] underline decoration-[#385898] underline-offset-2 hover:text-[#0E385F]"
+                >
+                  Open your dashboard
+                </Link>
+              </p>
+            ) : null}
+          </div>
         </div>
 
         <div className="mt-6 w-full shrink-0 py-0 md:mt-0 md:w-[380px]">
