@@ -27,13 +27,6 @@ bun run dev
 
 4. Open `http://localhost:3000`
 
-## Cloudflare Workers (build + deploy)
-
-This app is built for **Cloudflare Workers** with [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare/get-started), which outputs `.open-next/` for Wrangler.
-
-1. **Build command (Workers Builds / CI):** use `bun run cf:build` — **not** `bun run build`. OpenNext calls `next build` internally; if your root `build` script were `opennextjs-cloudflare build`, it would recurse and hang.
-2. **Deploy command:** `npx wrangler versions upload` (with `wrangler` installed from the project, and root `wrangler.jsonc` committed).
-
 ## Google sign-in: where to get each value
 
 This app uses **Supabase** as the OAuth bridge: users sign in with Google **through** Supabase. You will create **one OAuth client in Google Cloud** and paste its credentials into **Supabase** (not into `.env`).
