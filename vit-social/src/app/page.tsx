@@ -4,16 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { ALLOWED_EMAIL_DOMAIN, isAllowedVitEmail } from "@/lib/auth/email-domain";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 const LANDING_IMAGE_URL =
   "https://image-static.collegedunia.com/public/reviewPhotos/1150994/Screenshot%202025-11-29%20121734.png";
-
-const ALLOWED_DOMAIN = "vit.edu";
-
-function isAllowedVitEmail(email?: string | null) {
-  return email?.toLowerCase().endsWith(`@${ALLOWED_DOMAIN}`) ?? false;
-}
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
@@ -27,15 +22,30 @@ export default function Home() {
     if (!isSupabaseConfigured) {
       return;
     }
-    setSupabase(createClient());
+
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setSupabase(createClient());
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    const err = new URLSearchParams(window.location.search).get("error");
-    if (err === "auth") {
-      setAuthError("Sign-in could not be completed. Please try again.");
-      window.history.replaceState(null, "", window.location.pathname);
-    }
+    queueMicrotask(() => {
+      const err = new URLSearchParams(window.location.search).get("error");
+      if (err === "auth") {
+        setAuthError("Sign-in could not be completed. Please try again.");
+        window.history.replaceState(null, "", window.location.pathname);
+      } else if (err === "domain") {
+        setAuthError("Only @vit.edu email addresses can sign in right now.");
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -127,7 +137,7 @@ export default function Home() {
         options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         queryParams: {
-          hd: ALLOWED_DOMAIN,
+          hd: ALLOWED_EMAIL_DOMAIN,
           prompt: "select_account",
         },
       },
