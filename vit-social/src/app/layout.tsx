@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "vit.social - Connect at VIT",
+  title: "vitsocial.xyz - Connect at VIT",
   description: "The social network for VIT students.",
 };
 
