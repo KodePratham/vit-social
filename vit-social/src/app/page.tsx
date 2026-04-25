@@ -4,12 +4,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { createClient, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/client";
 
 const LANDING_IMAGE_URL =
   "https://image-static.collegedunia.com/public/reviewPhotos/1150994/Screenshot%202025-11-29%20121734.png";
 
 const ALLOWED_DOMAIN = "vit.edu";
+const CONFIGURATION_ERROR_MESSAGE =
+  "Google login is not configured for this deployment. Add NEXT_PUBLIC_SUPABASE_PROJECT_REF (or URL) and a public API key, then rebuild and redeploy.";
+const AUTH_LOG_PREFIX = "[vit-social auth]";
+
+function logAuthStep(step: string, details?: Record<string, unknown>) {
+  console.info(`${AUTH_LOG_PREFIX} ${step}`, details ?? {});
+}
+
+function logAuthError(step: string, error: unknown, details?: Record<string, unknown>) {
+  console.error(`${AUTH_LOG_PREFIX} ${step}`, {
+    ...details,
+    error: error instanceof Error ? error.message : String(error),
+  });
+}
 
 function isAllowedVitEmail(email?: string | null) {
   return email?.toLowerCase().endsWith(`@${ALLOWED_DOMAIN}`) ?? false;
@@ -24,15 +38,33 @@ export default function Home() {
   const [supabase, setSupabase] = useState<ReturnType<typeof createClient> | null>(null);
 
   useEffect(() => {
+    logAuthStep("landing page loaded", {
+      isSupabaseConfigured,
+      origin: window.location.origin,
+      supabaseUrl: getSupabaseUrl() ?? null,
+    });
+
     if (!isSupabaseConfigured) {
+      logAuthError("Supabase client configuration missing", new Error(CONFIGURATION_ERROR_MESSAGE), {
+        hasSupabaseUrl: Boolean(getSupabaseUrl()),
+      });
+      setAuthError(CONFIGURATION_ERROR_MESSAGE);
       return;
     }
-    setSupabase(createClient());
+
+    try {
+      setSupabase(createClient());
+      logAuthStep("Supabase browser client created");
+    } catch (error) {
+      logAuthError("Supabase browser client creation failed", error);
+      setAuthError(CONFIGURATION_ERROR_MESSAGE);
+    }
   }, []);
 
   useEffect(() => {
     const err = new URLSearchParams(window.location.search).get("error");
     if (err === "auth") {
+      logAuthError("OAuth callback returned auth error", new Error("Callback exchange failed"));
       setAuthError("Sign-in could not be completed. Please try again.");
       window.history.replaceState(null, "", window.location.pathname);
     }
@@ -48,6 +80,7 @@ export default function Home() {
     let isMounted = true;
 
     const hydrateSession = async () => {
+      logAuthStep("session hydration started");
       const { data, error } = await client.auth.getSession();
 
       if (!isMounted) {
@@ -55,6 +88,7 @@ export default function Home() {
       }
 
       if (error) {
+        logAuthError("session hydration failed", error);
         setAuthError(error.message);
         setIsLoadingSession(false);
         return;
@@ -62,6 +96,9 @@ export default function Home() {
 
       const nextSession = data.session;
       if (nextSession?.user?.email && !isAllowedVitEmail(nextSession.user.email)) {
+        logAuthError("session rejected by email domain", new Error("Email domain is not allowed"), {
+          email: nextSession.user.email,
+        });
         await client.auth.signOut();
         if (!isMounted) {
           return;
@@ -73,6 +110,10 @@ export default function Home() {
         return;
       }
 
+      logAuthStep("session hydration completed", {
+        hasSession: Boolean(nextSession),
+        email: nextSession?.user?.email ?? null,
+      });
       setSession(nextSession);
       setIsLoadingSession(false);
     };
@@ -86,8 +127,17 @@ export default function Home() {
         return;
       }
 
+      logAuthStep("auth state changed", {
+        event: _event,
+        hasSession: Boolean(nextSession),
+        email: nextSession?.user?.email ?? null,
+      });
+
       if (nextSession?.user?.email && !isAllowedVitEmail(nextSession.user.email)) {
         window.setTimeout(async () => {
+          logAuthError("auth state rejected by email domain", new Error("Email domain is not allowed"), {
+            email: nextSession.user.email,
+          });
           await client.auth.signOut();
           if (!isMounted) {
             return;
@@ -112,42 +162,71 @@ export default function Home() {
   const user = useMemo<User | null>(() => session?.user ?? null, [session]);
 
   const handleGoogleLogin = async () => {
+    logAuthStep("Google login clicked", {
+      isSupabaseConfigured,
+      hasClient: Boolean(supabase),
+      origin: window.location.origin,
+    });
+
     if (!supabase) {
-      setAuthError(
-        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_PROJECT_REF (or URL) and a public API key — see .env.example.",
-      );
+      logAuthError("Google login blocked before OAuth", new Error(CONFIGURATION_ERROR_MESSAGE));
+      setAuthError(CONFIGURATION_ERROR_MESSAGE);
       return;
     }
 
     setIsAuthBusy(true);
     setAuthError("");
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-        options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-        queryParams: {
-          hd: ALLOWED_DOMAIN,
-          prompt: "select_account",
-        },
-      },
+    const redirectTo = `${window.location.origin}/auth/callback?next=/dashboard`;
+    logAuthStep("Google OAuth request starting", {
+      redirectTo,
+      hostedDomainHint: ALLOWED_DOMAIN,
     });
 
-    if (error) {
-      setAuthError(error.message);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            hd: ALLOWED_DOMAIN,
+            prompt: "select_account",
+          },
+        },
+      });
+
+      if (error) {
+        logAuthError("Google OAuth request failed", error, { redirectTo });
+        setAuthError(error.message);
+        return;
+      }
+
+      logAuthStep("Google OAuth request accepted", {
+        provider: data.provider,
+        hasRedirectUrl: Boolean(data.url),
+      });
+    } catch (error) {
+      logAuthError("Google OAuth request threw", error, { redirectTo });
+      setAuthError("Google login could not be started. Please try again.");
+    } finally {
+      setIsAuthBusy(false);
     }
-    setIsAuthBusy(false);
   };
 
   const handleSignOut = async () => {
     if (!supabase) {
+      logAuthError("sign out blocked before request", new Error("Supabase client is missing"));
       return;
     }
 
     setIsAuthBusy(true);
+    logAuthStep("sign out requested");
     const { error } = await supabase.auth.signOut();
     if (error) {
+      logAuthError("sign out failed", error);
       setAuthError(error.message);
+    } else {
+      logAuthStep("sign out completed");
     }
     setIsAuthBusy(false);
   };
@@ -236,7 +315,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={user ? handleSignOut : handleGoogleLogin}
-                disabled={isAuthBusy || isLoadingSession || !isSupabaseConfigured}
+                disabled={isAuthBusy || isLoadingSession}
                 className="h-[26px] w-full min-w-0 border border-[#29487D] bg-[#4267B2] px-3 text-center text-sm font-bold leading-[24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.1)] enabled:cursor-pointer enabled:hover:bg-[#365899] enabled:active:bg-[#29487D] disabled:cursor-not-allowed disabled:opacity-60"
                 style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
               >

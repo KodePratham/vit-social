@@ -14,10 +14,10 @@ Do **not** set the Cloudflare OpenNext build (`build:cloudflare`) as the Vercel 
 
 ## Environment variables
 
-In the Vercel project → **Settings → Environment Variables**, add the variables from [`.env.example`](./.env.example), at least:
+In the Vercel project → **Settings → Environment Variables**, add at least:
 
 - `NEXT_PUBLIC_SUPABASE_PROJECT_REF` or full `NEXT_PUBLIC_SUPABASE_URL`
-- Your public Supabase anon key (`NEXT_PUBLIC_SUPABASE_ANON_KEY` or as documented in `.env.example`)
+- Your public Supabase anon key (`NEXT_PUBLIC_SUPABASE_ANON_KEY`) or publishable key (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`)
 
 Apply them to **Production** (and **Preview** if you use preview deployments).
 
@@ -34,7 +34,7 @@ Step-by-step: [Connect a custom domain on Vercel](./README.domain-vercel.md) (DN
 
 ```bash
 bun install
-cp .env.example .env.local   # then fill values
+# Create .env.local with NEXT_PUBLIC_SUPABASE_PROJECT_REF and NEXT_PUBLIC_SUPABASE_ANON_KEY
 bun run build
 bun run start
 ```

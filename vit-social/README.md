@@ -10,14 +10,14 @@ Campus social app for VIT students using Next.js and Supabase Auth.
 bun install
 ```
 
-2. Copy the environment template and fill in values from the Supabase dashboard:
+2. Create `.env.local` and fill in values from the Supabase dashboard:
 
 ```bash
-cp .env.example .env.local
-# Windows (PowerShell): Copy-Item .env.example .env.local
+NEXT_PUBLIC_SUPABASE_PROJECT_REF=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-Open `.env.local` and set at least `NEXT_PUBLIC_SUPABASE_PROJECT_REF` (this is the project **reference id** in **Project Settings** → **General** — the same id that appears in `https://<ref>.supabase.co`) and one public API key. You can set the full `NEXT_PUBLIC_SUPABASE_URL` instead of the ref if you prefer. See [`.env.example`](./.env.example) for all variables.
+Set `NEXT_PUBLIC_SUPABASE_PROJECT_REF` to the project **reference id** in **Project Settings** → **General** — the same id that appears in `https://<ref>.supabase.co` — and set one public API key from **Project Settings** → **API**. You can set the full `NEXT_PUBLIC_SUPABASE_URL` instead of the ref, and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` instead of `NEXT_PUBLIC_SUPABASE_ANON_KEY`, if you prefer.
 
 3. Start dev server:
 

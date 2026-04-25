@@ -72,8 +72,8 @@ Use these for **sign-in and OAuth** when login is enabled. They do not affect st
 
 | Where | Path in dashboard | What to set |
 |--------|-------------------|------------|
-| **Supabase** | **Authentication** → **URL configuration** | **Site URL:** `https://www.vitsocial.xyz`. **Redirect URLs:** include `https://www.vitsocial.xyz/auth/callback` (and `https://www.vitsocial.xyz/**` if you allow a wildcard, per Supabase docs). |
-| **Google** | **APIs & Services** → **Credentials** → your **OAuth 2.0 Client ID** | **Authorized JavaScript origins:** `https://www.vitsocial.xyz` (origin only, no path). **Authorized redirect URIs:** the URL Supabase gives you for Google (typically `https://<project-ref>.supabase.co/auth/v1/callback`) — not your vitsocial domain, because the browser does not return to your app in the first Google hop. |
+| **Supabase** | **Authentication** → **URL configuration** | **Site URL:** your canonical production origin, e.g. `https://vitsocial.xyz` or `https://www.vitsocial.xyz`. **Redirect URLs:** include that origin’s `/auth/callback`, and include both apex and `www` callback URLs if users can open both hostnames. |
+| **Google** | **APIs & Services** → **Credentials** → your **OAuth 2.0 Client ID** | **Authorized JavaScript origins:** every production origin users can open, e.g. `https://vitsocial.xyz` and/or `https://www.vitsocial.xyz` (origin only, no path). **Authorized redirect URIs:** the URL Supabase gives you for Google (typically `https://<project-ref>.supabase.co/auth/v1/callback`) — not your vitsocial domain, because the browser does not return to your app in the first Google hop. |
 
 ## See also
 
