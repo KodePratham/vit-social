@@ -72,12 +72,23 @@ Optional but important for this codebase:
 
 ## 3. Cloudflare (Workers + OpenNext)
 
+Official reference: [Environment variables (Cloudflare Workers)](https://developers.cloudflare.com/workers/configuration/environment-variables/) — how `vars` in Wrangler, **dashboard** variables, and **secrets** are bound to the Worker and (with `nodejs_compat`) appear on `process.env`.
+
+### 3.0 In this repository
+
+- [`wrangler.jsonc`](./wrangler.jsonc) has **no `vars` block** — no Supabase settings are versioned. You are expected to set variables in the **Cloudflare dashboard** (Worker → **Settings** → **Variables and Secrets**), or in **[`vars` in Wrangler](https://developers.cloudflare.com/workers/wrangler/configuration/)** if you add them locally, and in **Workers Builds** env for the `bun run build:cloudflare` step.
+- The app reads only the names in [`src/lib/supabase/config.ts`](./src/lib/supabase/config.ts): `NEXT_PUBLIC_SUPABASE_URL` *or* `NEXT_PUBLIC_SUPABASE_PROJECT_REF` / `NEXT_PUBLIC_SUPABASE_PROJECT_ID`, plus `NEXT_PUBLIC_SUPABASE_ANON_KEY` *or* `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+
+**You cannot tell from Git alone if production is “correct”** — confirm in Cloudflare that the **same** `NEXT_PUBLIC_*` values are present for **both** (1) the **build** that produced the deployed `.open-next` output and (2) the **Worker** runtime. [Cloudflare’s docs](https://developers.cloudflare.com/workers/configuration/environment-variables/#compare-secrets-and-environment-variables) note that to the Worker, secrets and plain variables behave the same; use **Text** (Variable) for the anon key if you are fine with it being visible in the dashboard, or **Secret** for operational hygiene — the key is still shipped to the browser by Next.js, so RLS is what protects your data.
+
+For local `wrangler dev` / preview, use [`.dev.vars` or `.env` next to the Wrangler file](https://developers.cloudflare.com/workers/configuration/environment-variables/) and do not commit real values.
+
 1. **Build environment variables** (Workers Builds / CI that runs `bun run build:cloudflare`):
 
    - `NEXT_PUBLIC_SUPABASE_PROJECT_REF` **or** `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` **or** `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-   If these are missing at **build** time, the client bundle may point at the wrong or empty Supabase project; Google login often fails or redirects incorrectly.
+   If these are missing at **build** time, the client bundle may point at the wrong or empty Supabase project; Google login often fails or redirects incorrectly. **Runtime-only** variables do not fix a client built without `NEXT_PUBLIC_*` — redeploy after fixing **build** env.
 
 2. **Worker runtime variables:** define the **same** `NEXT_PUBLIC_*` values for the deployed Worker so server-side auth (including `/auth/callback`) matches the browser.
 
