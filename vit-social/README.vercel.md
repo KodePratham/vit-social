@@ -28,7 +28,7 @@ Then in **Supabase → Authentication → URL configuration**:
 
 ## Custom domain
 
-Add the domain in Vercel, then add the same origin to Google OAuth **Authorized JavaScript origins** and update Supabase redirect URLs to match.
+Step-by-step: [Connect a custom domain on Vercel](./README.domain-vercel.md) (DNS, Supabase, Google origins).
 
 ## Local parity
 
