@@ -91,3 +91,8 @@ This repo supports two targets. Use the guide that matches your host:
 
 - [Cloudflare Workers (OpenNext)](./README.cloudflare.md) — build must run `opennextjs-cloudflare`, not plain `next build`.
 - [Vercel](./README.vercel.md) — standard Next.js build.
+
+### Custom domains
+
+- [Cloudflare Workers — connect your domain](./README.domain-cloudflare.md)
+- [Vercel — connect your domain](./README.domain-vercel.md)
