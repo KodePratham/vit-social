@@ -1,21 +1,103 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
+type UserProfile = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  instagram_account: string | null;
+  twitter_account: string | null;
+  linkedin_account: string | null;
+  created_at: string;
+};
+
+type ProfileForm = {
+  bio: string;
+  instagram_account: string;
+  twitter_account: string;
+  linkedin_account: string;
+};
+
+const emptyProfileForm: ProfileForm = {
+  bio: "",
+  instagram_account: "",
+  twitter_account: "",
+  linkedin_account: "",
+};
+
+function getDisplayName(profile: UserProfile, fallbackEmail?: string | null) {
+  return profile.full_name?.trim() || fallbackEmail || profile.email || "VIT student";
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function normalizeProfileValue(value: string) {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function getSocialHref(platform: keyof Pick<
+  UserProfile,
+  "instagram_account" | "twitter_account" | "linkedin_account"
+>, account: string) {
+  if (/^https?:\/\//i.test(account)) {
+    return account;
+  }
+
+  const cleanAccount = account.replace(/^@/, "");
+  const encodedAccount = encodeURIComponent(cleanAccount);
+
+  if (platform === "instagram_account") {
+    return `https://instagram.com/${encodedAccount}`;
+  }
+
+  if (platform === "twitter_account") {
+    return `https://twitter.com/${encodedAccount}`;
+  }
+
+  return `https://linkedin.com/in/${encodedAccount}`;
+}
+
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [profileForm, setProfileForm] = useState<ProfileForm>(emptyProfileForm);
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [supabase, setSupabase] = useState<ReturnType<typeof createClient> | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
       return;
     }
-    setSupabase(createClient());
+
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setSupabase(createClient());
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -26,11 +108,55 @@ export default function DashboardPage() {
     let mounted = true;
 
     void (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (mounted) {
-        setUser(data.user);
-        setIsLoading(false);
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (!mounted) {
+        return;
       }
+
+      if (userError) {
+        setErrorMessage(userError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      const currentUser = userData.user;
+      setUser(currentUser);
+
+      if (!currentUser) {
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select(
+          "id,email,full_name,avatar_url,bio,instagram_account,twitter_account,linkedin_account,created_at",
+        )
+        .order("created_at", { ascending: false });
+
+      if (!mounted) {
+        return;
+      }
+
+      if (usersError) {
+        setErrorMessage(usersError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      const nextProfiles = (usersData ?? []) as UserProfile[];
+      const nextProfile = nextProfiles.find((item) => item.id === currentUser.id) ?? null;
+
+      setProfiles(nextProfiles);
+      setProfile(nextProfile);
+      setProfileForm({
+        bio: nextProfile?.bio ?? "",
+        instagram_account: nextProfile?.instagram_account ?? "",
+        twitter_account: nextProfile?.twitter_account ?? "",
+        linkedin_account: nextProfile?.linkedin_account ?? "",
+      });
+      setIsLoading(false);
     })();
 
     const {
@@ -46,6 +172,69 @@ export default function DashboardPage() {
       subscription.unsubscribe();
     };
   }, [supabase]);
+
+  const displayName = useMemo(() => {
+    if (profile) {
+      return getDisplayName(profile, user?.email);
+    }
+
+    return user?.user_metadata?.full_name || user?.email || "VIT student";
+  }, [profile, user]);
+
+  const handleProfileChange = (field: keyof ProfileForm, value: string) => {
+    setProfileForm((current) => ({ ...current, [field]: value }));
+    setNotice("");
+    setErrorMessage("");
+  };
+
+  const handleProfileSave = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!supabase || !user) {
+      return;
+    }
+
+    setIsSavingProfile(true);
+    setNotice("");
+    setErrorMessage("");
+
+    const updates = {
+      bio: normalizeProfileValue(profileForm.bio),
+      instagram_account: normalizeProfileValue(profileForm.instagram_account),
+      twitter_account: normalizeProfileValue(profileForm.twitter_account),
+      linkedin_account: normalizeProfileValue(profileForm.linkedin_account),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("users")
+      .update(updates)
+      .eq("id", user.id)
+      .select(
+        "id,email,full_name,avatar_url,bio,instagram_account,twitter_account,linkedin_account,created_at",
+      )
+      .single();
+
+    if (error) {
+      setErrorMessage(error.message);
+      setIsSavingProfile(false);
+      return;
+    }
+
+    const updatedProfile = data as UserProfile;
+    setProfile(updatedProfile);
+    setProfiles((current) =>
+      current.map((item) => (item.id === updatedProfile.id ? updatedProfile : item)),
+    );
+    setProfileForm({
+      bio: updatedProfile.bio ?? "",
+      instagram_account: updatedProfile.instagram_account ?? "",
+      twitter_account: updatedProfile.twitter_account ?? "",
+      linkedin_account: updatedProfile.linkedin_account ?? "",
+    });
+    setNotice("Profile updated.");
+    setIsSavingProfile(false);
+  };
 
   const handleSignOut = async () => {
     if (!supabase) {
@@ -88,25 +277,214 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[980px] px-4 py-12 sm:px-6">
-        <h1
-          className="m-0 text-2xl font-bold text-[#0E385F] sm:text-3xl"
-          style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-        >
-          Dashboard
-        </h1>
-        <p className="mt-2 text-sm text-[#606770]">Your home base on vit.social.</p>
+      <main className="mx-auto grid max-w-[980px] gap-4 px-3 py-4 sm:px-4 md:grid-cols-[260px_1fr]">
+        <aside className="space-y-3">
+          <section className="overflow-hidden rounded border border-[#BDC7D8] bg-white shadow-sm">
+            <div className="h-24 bg-gradient-to-b from-[#6D84B4] to-[#3B5998]" />
+            <div className="px-3 pb-4">
+              <div className="-mt-10 flex h-20 w-20 items-center justify-center overflow-hidden rounded border-4 border-white bg-[#E7EBF2] text-2xl font-bold text-[#3B5998] shadow">
+                {profile?.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.avatar_url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  getInitials(displayName)
+                )}
+              </div>
+              <h1
+                className="mt-3 m-0 text-xl font-bold leading-tight text-[#0E385F]"
+                style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
+              >
+                {displayName}
+              </h1>
+              <p className="mt-1 break-words text-xs text-[#606770]">{user?.email}</p>
+              <p className="mt-3 min-h-10 text-sm leading-snug text-[#1C1E21]">
+                {profile?.bio || "Add a short bio so other VIT students know you."}
+              </p>
+            </div>
+          </section>
 
-        <div className="mt-8 rounded border border-[#BDC7D8] bg-white p-8 text-center shadow-sm">
-          <p
-            className="m-0 text-lg font-bold text-[#0E385F] sm:text-xl"
-            style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-          >
-            Coming soon
-          </p>
-          <p className="mt-2 m-0 text-sm text-[#606770]">
-            We are building the rest of the experience. Check back for feeds, events, and more.
-          </p>
+          <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
+            <h2 className="border-b border-[#DADDE1] bg-[#F5F6F7] px-3 py-2 text-sm font-bold text-[#4B4F56]">
+              Contact Info
+            </h2>
+            <div className="space-y-2 p-3 text-sm">
+              {(["instagram_account", "twitter_account", "linkedin_account"] as const).map(
+                (field) => {
+                  const value = profile?.[field];
+                  const label =
+                    field === "instagram_account"
+                      ? "Instagram"
+                      : field === "twitter_account"
+                        ? "Twitter"
+                        : "LinkedIn";
+
+                  return (
+                    <div key={field} className="flex justify-between gap-3">
+                      <span className="font-semibold text-[#606770]">{label}</span>
+                      {value ? (
+                        <a
+                          href={getSocialHref(field, value)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="min-w-0 truncate text-right font-semibold text-[#385898]"
+                        >
+                          {value}
+                        </a>
+                      ) : (
+                        <span className="text-[#8A8D91]">Not added</span>
+                      )}
+                    </div>
+                  );
+                },
+              )}
+            </div>
+          </section>
+        </aside>
+
+        <div className="space-y-4">
+          <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
+            <div className="border-b border-[#DADDE1] bg-[#F5F6F7] px-4 py-2">
+              <h2
+                className="m-0 text-base font-bold text-[#0E385F]"
+                style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
+              >
+                Edit Profile
+              </h2>
+              <p className="mt-1 text-xs text-[#606770]">
+                Share a little about yourself and where classmates can find you.
+              </p>
+            </div>
+
+            <form className="space-y-3 p-4" onSubmit={handleProfileSave}>
+              {errorMessage ? (
+                <p className="border border-[#E41E3F]/40 bg-[#FFE4E1] p-2 text-xs font-medium text-[#7f1d1d]">
+                  {errorMessage}
+                </p>
+              ) : null}
+              {notice ? (
+                <p className="border border-[#9CB4D2] bg-[#F0F2F5] p-2 text-xs font-medium text-[#0E385F]">
+                  {notice}
+                </p>
+              ) : null}
+
+              <label className="block text-sm font-semibold text-[#4B4F56]">
+                Bio
+                <textarea
+                  value={profileForm.bio}
+                  onChange={(event) => handleProfileChange("bio", event.target.value)}
+                  maxLength={280}
+                  rows={4}
+                  className="mt-1 w-full resize-none rounded-none border border-[#BDC7D8] bg-white p-2 text-sm font-normal text-[#1C1E21] outline-none focus:border-[#3B5998]"
+                  placeholder="Write a short intro..."
+                />
+              </label>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="block text-sm font-semibold text-[#4B4F56]">
+                  Instagram
+                  <input
+                    value={profileForm.instagram_account}
+                    onChange={(event) =>
+                      handleProfileChange("instagram_account", event.target.value)
+                    }
+                    maxLength={120}
+                    className="mt-1 h-9 w-full rounded-none border border-[#BDC7D8] bg-white px-2 text-sm font-normal text-[#1C1E21] outline-none focus:border-[#3B5998]"
+                    placeholder="@username"
+                  />
+                </label>
+                <label className="block text-sm font-semibold text-[#4B4F56]">
+                  Twitter
+                  <input
+                    value={profileForm.twitter_account}
+                    onChange={(event) =>
+                      handleProfileChange("twitter_account", event.target.value)
+                    }
+                    maxLength={120}
+                    className="mt-1 h-9 w-full rounded-none border border-[#BDC7D8] bg-white px-2 text-sm font-normal text-[#1C1E21] outline-none focus:border-[#3B5998]"
+                    placeholder="@username"
+                  />
+                </label>
+                <label className="block text-sm font-semibold text-[#4B4F56]">
+                  LinkedIn
+                  <input
+                    value={profileForm.linkedin_account}
+                    onChange={(event) =>
+                      handleProfileChange("linkedin_account", event.target.value)
+                    }
+                    maxLength={120}
+                    className="mt-1 h-9 w-full rounded-none border border-[#BDC7D8] bg-white px-2 text-sm font-normal text-[#1C1E21] outline-none focus:border-[#3B5998]"
+                    placeholder="profile-name"
+                  />
+                </label>
+              </div>
+
+              <div className="border-t border-[#DADDE1] pt-3 text-right">
+                <button
+                  type="submit"
+                  disabled={isLoading || isSavingProfile || !user}
+                  className="h-[26px] border border-[#29487D] bg-[#4267B2] px-4 text-sm font-bold leading-[24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.1)] enabled:cursor-pointer enabled:hover:bg-[#365899] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSavingProfile ? "Saving..." : "Save Profile"}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
+            <div className="border-b border-[#DADDE1] bg-[#F5F6F7] px-4 py-2">
+              <h2
+                className="m-0 text-base font-bold text-[#0E385F]"
+                style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
+              >
+                Students on vit.social
+              </h2>
+              <p className="mt-1 text-xs text-[#606770]">
+                Everyone who has joined the app appears here.
+              </p>
+            </div>
+
+            <div className="divide-y divide-[#E9EBEE]">
+              {isLoading ? (
+                <p className="p-4 text-sm text-[#606770]">Loading students...</p>
+              ) : profiles.length > 0 ? (
+                profiles.map((item) => {
+                  const name = getDisplayName(item);
+
+                  return (
+                    <article key={item.id} className="flex gap-3 p-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-[#BDC7D8] bg-[#E7EBF2] text-sm font-bold text-[#3B5998]">
+                        {item.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.avatar_url}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          getInitials(name)
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="m-0 truncate text-sm font-bold text-[#385898]">{name}</h3>
+                        <p className="m-0 mt-1 truncate text-xs text-[#606770]">{item.email}</p>
+                        {item.bio ? (
+                          <p className="m-0 mt-2 text-sm leading-snug text-[#1C1E21]">{item.bio}</p>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+                })
+              ) : (
+                <p className="p-4 text-sm text-[#606770]">No students have joined yet.</p>
+              )}
+            </div>
+          </section>
         </div>
       </main>
     </div>
