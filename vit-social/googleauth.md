@@ -66,7 +66,7 @@ Optional but important for this codebase:
 
      (Include both if both hostnames are valid ways to open the app.)
 
-   The app sets `redirectTo` to `${window.location.origin}/auth/callback?next=/dashboard`, so the origin in the browser **must** match an allowed redirect pattern in Supabase.
+   The app sets `redirectTo` to `${window.location.origin}/auth/callback?next=/profile`, so the origin in the browser **must** match an allowed redirect pattern in Supabase.
 
 ---
 

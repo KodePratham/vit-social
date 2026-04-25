@@ -134,8 +134,8 @@ export default function Home() {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-        options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/profile`,
         queryParams: {
           hd: ALLOWED_EMAIL_DOMAIN,
           prompt: "select_account",
@@ -173,7 +173,7 @@ export default function Home() {
             className="cursor-default select-none text-[2.1rem] font-bold leading-none tracking-[-0.5px] text-white sm:text-[2.5rem]"
             style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
           >
-            vit<span className="font-normal">.social</span>
+            vitsocial<span className="font-normal">.xyz</span>
           </span>
         </div>
       </header>
@@ -196,16 +196,16 @@ export default function Home() {
               className="m-0 max-w-[40rem] text-[1.1rem] font-bold leading-tight sm:text-[1.2rem] md:pr-4"
               style={{ color: "#0E385F" }}
             >
-              vit.social helps you connect and share with the people in your life at VIT.
+              vitsocial.xyz helps you connect and share with the people in your life at VIT.
             </h1>
             <div className="mt-2 hidden h-px w-full max-w-md bg-[#9CB4D2]/60 sm:block" />
             {user ? (
               <p className="mt-3 text-sm">
                 <Link
-                  href="/dashboard"
+                  href="/profile"
                   className="font-semibold text-[#385898] underline decoration-[#385898] underline-offset-2 hover:text-[#0E385F]"
                 >
-                  Open your dashboard
+                  Open your profile
                 </Link>
               </p>
             ) : null}
@@ -218,7 +218,7 @@ export default function Home() {
               className="m-0 text-[1.1rem] font-bold text-[#0E385F] sm:text-lg"
               style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
             >
-              Log in to vit.social
+              Log in to vitsocial.xyz
             </h2>
             <p className="mt-2 text-[0.7rem] leading-snug text-[#606770] sm:text-xs">
               Use your <strong className="text-[#4b4f56]">@vit.edu</strong> Google account. Other
@@ -272,7 +272,7 @@ export default function Home() {
           <span className="mx-2 text-[#9CB4D2]">|</span>
           <span className="text-[#385898]">Campus</span>
         </p>
-        <p className="m-0 mt-2 text-[#8a8d91]">vit.social &middot; For VIT students &middot; 2026</p>
+        <p className="m-0 mt-2 text-[#8a8d91]">vitsocial.xyz &middot; For VIT students &middot; 2026</p>
       </footer>
     </div>
   );
