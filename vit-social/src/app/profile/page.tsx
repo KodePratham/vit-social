@@ -3,32 +3,18 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { BRANCH_CONFIG, getDivisionsForBranch, isValidBranchDivision } from "@/lib/branches";
+import {
+  friendRequestSelect,
+  getDisplayName,
+  getSocialHref,
+  profileSelect,
+  type FriendRequest,
+  type SocialField,
+  type UserProfile,
+} from "@/lib/profile-shared";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-
-type UserProfile = {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  avatar_url: string | null;
-  bio: string | null;
-  instagram_account: string | null;
-  twitter_account: string | null;
-  linkedin_account: string | null;
-  github_account: string | null;
-  branch: string | null;
-  division: string | null;
-  created_at: string;
-};
-
-type FriendRequest = {
-  id: string;
-  requester_id: string;
-  receiver_id: string;
-  status: "pending" | "accepted" | "rejected";
-  created_at: string;
-  responded_at: string | null;
-};
 
 type ProfileForm = {
   bio: string;
@@ -40,17 +26,6 @@ type ProfileForm = {
   division: string;
 };
 
-type SocialField =
-  | "instagram_account"
-  | "twitter_account"
-  | "linkedin_account"
-  | "github_account";
-
-const profileSelect =
-  "id,email,full_name,avatar_url,bio,instagram_account,twitter_account,linkedin_account,github_account,branch,division,created_at";
-
-const friendRequestSelect = "id,requester_id,receiver_id,status,created_at,responded_at";
-
 const emptyProfileForm: ProfileForm = {
   bio: "",
   instagram_account: "",
@@ -60,19 +35,6 @@ const emptyProfileForm: ProfileForm = {
   branch: "",
   division: "",
 };
-
-function getDisplayName(profile: UserProfile, fallbackEmail?: string | null) {
-  return profile.full_name?.trim() || fallbackEmail || profile.email || "VIT student";
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 function normalizeProfileValue(value: string) {
   const trimmed = value.trim();
@@ -97,29 +59,6 @@ function resolveCampusForSave(
     return { ok: false, message: "That division is not valid for the selected branch." };
   }
   return { ok: true, branch: b, division: d };
-}
-
-function getSocialHref(platform: SocialField, account: string) {
-  if (/^https?:\/\//i.test(account)) {
-    return account;
-  }
-
-  const cleanAccount = account.replace(/^@/, "");
-  const encodedAccount = encodeURIComponent(cleanAccount);
-
-  if (platform === "instagram_account") {
-    return `https://instagram.com/${encodedAccount}`;
-  }
-
-  if (platform === "twitter_account") {
-    return `https://twitter.com/${encodedAccount}`;
-  }
-
-  if (platform === "github_account") {
-    return `https://github.com/${encodedAccount}`;
-  }
-
-  return `https://linkedin.com/in/${encodedAccount}`;
 }
 
 function BranchDivisionFields({
@@ -177,26 +116,6 @@ function BranchDivisionFields({
           ))}
         </select>
       </label>
-    </div>
-  );
-}
-
-function ProfileAvatar({ profile, name, size }: { profile: UserProfile; name: string; size: string }) {
-  return (
-    <div
-      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded border border-[#BDC7D8] bg-[#E7EBF2] text-sm font-bold text-[#3B5998]`}
-    >
-      {profile.avatar_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={profile.avatar_url}
-          alt=""
-          className="h-full w-full object-cover"
-          referrerPolicy="no-referrer"
-        />
-      ) : (
-        getInitials(name)
-      )}
     </div>
   );
 }
@@ -675,7 +594,13 @@ export default function ProfilePage() {
           >
             vitsocial<span className="font-normal">.xyz</span>
           </Link>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center justify-end gap-2 text-sm">
+            <Link
+              href="/friends"
+              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
+            >
+              Friends
+            </Link>
             {!isLoading && user?.email ? (
               <span className="hidden max-w-[12rem] truncate text-xs text-white/90 sm:inline">
                 {user.email}
@@ -764,9 +689,15 @@ export default function ProfilePage() {
           </section>
 
           <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
-            <h2 className="border-b border-[#DADDE1] bg-[#F5F6F7] px-3 py-2 text-sm font-bold text-[#4B4F56]">
-              Friends
-            </h2>
+            <div className="flex items-center justify-between gap-2 border-b border-[#DADDE1] bg-[#F5F6F7] px-3 py-2">
+              <h2 className="m-0 text-sm font-bold text-[#4B4F56]">Friends</h2>
+              <Link
+                href="/friends"
+                className="shrink-0 text-xs font-semibold text-[#385898] hover:underline"
+              >
+                View all
+              </Link>
+            </div>
             <div className="divide-y divide-[#E9EBEE]">
               {friends.length > 0 ? (
                 friends.map((item) => {
