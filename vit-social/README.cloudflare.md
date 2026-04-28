@@ -72,6 +72,15 @@ This mirrors Vercel, where those values are available when `next build` runs.
 
 Also define the same keys for the **Worker** runtime (dashboard **Settings → Variables** for the worker, or `vars` in [`wrangler.jsonc`](./wrangler.jsonc) for public values, or `wrangler secret put` only for truly private server secrets). Server-side rendering and route handlers read `process.env` in the Worker.
 
+### MongoDB (feed / `POST`+`GET` `/api/posts`)
+
+The friend feed uses MongoDB via the **`mongodb`** Node driver. Configure at **runtime** (and in CI if you run integration tests against a real cluster):
+
+- **`MONGODB_URI`** — use **`wrangler secret put MONGODB_URI`** (or Cloudflare **Secrets**) so it is never in source control. Do **not** add this as a `NEXT_PUBLIC_*` variable.
+- **`MONGODB_DB_NAME`** — optional; defaults to `vit_social`. Can be a plain `vars` entry if non-sensitive.
+
+The route handler sets **`export const runtime = "nodejs"`** so OpenNext can run it on a Node-compatible surface. **Verify in staging** that your Worker can connect to **MongoDB Atlas**. If not, use the [Atlas Data API](https://www.mongodb.com/docs/atlas/api/data-api/) or host the post API on a full Node runtime. Details: [`docs/mongodb-setup.md`](./docs/mongodb-setup.md).
+
 ### OAuth / redirects
 
 After you know the public URL (custom domain or `*.workers.dev`), update:
