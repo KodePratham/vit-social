@@ -39,6 +39,22 @@ function authorToProfile(author: FeedAuthor): UserProfile {
   };
 }
 
+async function parseApiJson(res: Response): Promise<unknown> {
+  const text = await res.text();
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error(
+      `Empty response (HTTP ${res.status}). Is MONGODB_URI set on Cloudflare? Check Worker logs.`,
+    );
+  }
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    const preview = trimmed.slice(0, 200).replace(/\s+/g, " ");
+    throw new Error(`Non-JSON response (HTTP ${res.status}): ${preview}`);
+  }
+}
+
 export default function FeedPage() {
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
@@ -69,12 +85,7 @@ export default function FeedPage() {
 
   const fetchPostsFromApi = useCallback(async (): Promise<FeedPost[]> => {
     const res = await fetch("/api/posts", { credentials: "same-origin" });
-    let payload: unknown;
-    try {
-      payload = await res.json();
-    } catch {
-      throw new Error("Could not read server response.");
-    }
+    const payload = await parseApiJson(res);
 
     if (!res.ok) {
       const err =
@@ -201,9 +212,9 @@ export default function FeedPage() {
 
       let payload: unknown;
       try {
-        payload = await res.json();
-      } catch {
-        setErrorMessage("Could not read server response.");
+        payload = await parseApiJson(res);
+      } catch (e) {
+        setErrorMessage(e instanceof Error ? e.message : "Could not read server response.");
         setIsPosting(false);
         return;
       }

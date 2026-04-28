@@ -70,6 +70,16 @@ This is **not** a `NEXT_PUBLIC_*` variable; it does not need to be in the OpenNe
 
 More Cloudflare context: [`README.cloudflare.md`](../README.cloudflare.md).
 
+### “Could not read server response” / empty body on the feed
+
+That usually means **`/api/posts` did not return JSON** (empty body, HTML error page, or a crash before the handler finished). After deploying, check:
+
+1. **`MONGODB_URI`** is set as a **secret** on the Worker and you **redeployed** after saving.
+2. Atlas **Network Access** allows your traffic (often **`0.0.0.0/0`** for serverless).
+3. **Worker logs** (dashboard **Logs** or `wrangler tail`) for Mongo connection or runtime errors.
+
+The API route is wrapped so unexpected errors should return **`{ "error": "..." }`** with HTTP 500 when the handler runs; if you still see empty or HTML responses, the failure may be at the platform edge (timeout, route not bound, etc.).
+
 ## CLI vs the running app
 
 **Atlas CLI** and **mongosh** are for **you**: manage clusters, run queries, create indexes.
