@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
+import { BRANCH_CONFIG, getDivisionsForBranch, isValidBranchDivision } from "@/lib/branches";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 type UserProfile = {
@@ -15,6 +16,8 @@ type UserProfile = {
   twitter_account: string | null;
   linkedin_account: string | null;
   github_account: string | null;
+  branch: string | null;
+  division: string | null;
   created_at: string;
 };
 
@@ -33,6 +36,8 @@ type ProfileForm = {
   twitter_account: string;
   linkedin_account: string;
   github_account: string;
+  branch: string;
+  division: string;
 };
 
 type SocialField =
@@ -42,7 +47,7 @@ type SocialField =
   | "github_account";
 
 const profileSelect =
-  "id,email,full_name,avatar_url,bio,instagram_account,twitter_account,linkedin_account,github_account,created_at";
+  "id,email,full_name,avatar_url,bio,instagram_account,twitter_account,linkedin_account,github_account,branch,division,created_at";
 
 const friendRequestSelect = "id,requester_id,receiver_id,status,created_at,responded_at";
 
@@ -52,6 +57,8 @@ const emptyProfileForm: ProfileForm = {
   twitter_account: "",
   linkedin_account: "",
   github_account: "",
+  branch: "",
+  division: "",
 };
 
 function getDisplayName(profile: UserProfile, fallbackEmail?: string | null) {
@@ -70,6 +77,26 @@ function getInitials(name: string) {
 function normalizeProfileValue(value: string) {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function resolveCampusForSave(
+  branchRaw: string,
+  divisionRaw: string,
+):
+  | { ok: true; branch: string | null; division: string | null }
+  | { ok: false; message: string } {
+  const b = branchRaw.trim();
+  const d = divisionRaw.trim();
+  if (!b && !d) {
+    return { ok: true, branch: null, division: null };
+  }
+  if (!b || !d) {
+    return { ok: false, message: "Choose both your branch and division." };
+  }
+  if (!isValidBranchDivision(b, d)) {
+    return { ok: false, message: "That division is not valid for the selected branch." };
+  }
+  return { ok: true, branch: b, division: d };
 }
 
 function getSocialHref(platform: SocialField, account: string) {
@@ -93,6 +120,65 @@ function getSocialHref(platform: SocialField, account: string) {
   }
 
   return `https://linkedin.com/in/${encodedAccount}`;
+}
+
+function BranchDivisionFields({
+  branch,
+  division,
+  onBranchChange,
+  onDivisionChange,
+  disabled,
+  idPrefix,
+}: {
+  branch: string;
+  division: string;
+  onBranchChange: (value: string) => void;
+  onDivisionChange: (value: string) => void;
+  disabled?: boolean;
+  idPrefix: string;
+}) {
+  const divisions = getDivisionsForBranch(branch);
+  const selectClassName =
+    "mt-1 h-9 w-full rounded-none border border-[#BDC7D8] bg-white px-2 text-sm font-normal text-[#1C1E21] outline-none focus:border-[#3B5998] disabled:opacity-60";
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <label className="block text-sm font-semibold text-[#4B4F56]" htmlFor={`${idPrefix}-branch`}>
+        Branch
+        <select
+          id={`${idPrefix}-branch`}
+          value={branch}
+          onChange={(event) => onBranchChange(event.target.value)}
+          disabled={disabled}
+          className={selectClassName}
+        >
+          <option value="">Select branch</option>
+          {BRANCH_CONFIG.map((row) => (
+            <option key={row.branch} value={row.branch}>
+              {row.branch}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-sm font-semibold text-[#4B4F56]" htmlFor={`${idPrefix}-division`}>
+        Division
+        <select
+          id={`${idPrefix}-division`}
+          value={division}
+          onChange={(event) => onDivisionChange(event.target.value)}
+          disabled={disabled || !branch}
+          className={selectClassName}
+        >
+          <option value="">Select division</option>
+          {divisions.map((letter) => (
+            <option key={letter} value={letter}>
+              {letter}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
 }
 
 function ProfileAvatar({ profile, name, size }: { profile: UserProfile; name: string; size: string }) {
@@ -125,6 +211,7 @@ export default function ProfilePage() {
   const [activeSearch, setActiveSearch] = useState("");
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingCampus, setIsSavingCampus] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [busyRequestId, setBusyRequestId] = useState("");
   const [busyProfileId, setBusyProfileId] = useState("");
@@ -205,6 +292,12 @@ export default function ProfilePage() {
       const nextProfiles = (usersResult.data ?? []) as UserProfile[];
       const nextProfile = nextProfiles.find((item) => item.id === currentUser.id) ?? null;
 
+      const nextBranch = nextProfile?.branch?.trim() ?? "";
+      let nextDivision = nextProfile?.division?.trim() ?? "";
+      if (nextBranch && nextDivision && !isValidBranchDivision(nextBranch, nextDivision)) {
+        nextDivision = "";
+      }
+
       setProfiles(nextProfiles);
       setFriendRequests((requestsResult.data ?? []) as FriendRequest[]);
       setProfile(nextProfile);
@@ -214,6 +307,8 @@ export default function ProfilePage() {
         twitter_account: nextProfile?.twitter_account ?? "",
         linkedin_account: nextProfile?.linkedin_account ?? "",
         github_account: nextProfile?.github_account ?? "",
+        branch: nextBranch,
+        division: nextDivision,
       });
       setIsLoading(false);
     })();
@@ -239,6 +334,20 @@ export default function ProfilePage() {
 
     return user?.user_metadata?.full_name || user?.email || "VIT student";
   }, [profile, user]);
+
+  const needsCampusChoice = useMemo(() => {
+    if (!profile) {
+      return false;
+    }
+
+    const b = profile.branch?.trim() ?? "";
+    const d = profile.division?.trim() ?? "";
+    if (!b || !d) {
+      return true;
+    }
+
+    return !isValidBranchDivision(b, d);
+  }, [profile]);
 
   const profileById = useMemo(() => {
     return new Map(profiles.map((item) => [item.id, item]));
@@ -308,7 +417,15 @@ export default function ProfilePage() {
   }, [activeSearch, profiles, user]);
 
   const handleProfileChange = (field: keyof ProfileForm, value: string) => {
-    setProfileForm((current) => ({ ...current, [field]: value }));
+    if (field === "branch") {
+      setProfileForm((current) => ({
+        ...current,
+        branch: value,
+        division: "",
+      }));
+    } else {
+      setProfileForm((current) => ({ ...current, [field]: value }));
+    }
     setNotice("");
     setErrorMessage("");
   };
@@ -324,12 +441,21 @@ export default function ProfilePage() {
     setNotice("");
     setErrorMessage("");
 
+    const campus = resolveCampusForSave(profileForm.branch, profileForm.division);
+    if (!campus.ok) {
+      setErrorMessage(campus.message);
+      setIsSavingProfile(false);
+      return;
+    }
+
     const updates = {
       bio: normalizeProfileValue(profileForm.bio),
       instagram_account: normalizeProfileValue(profileForm.instagram_account),
       twitter_account: normalizeProfileValue(profileForm.twitter_account),
       linkedin_account: normalizeProfileValue(profileForm.linkedin_account),
       github_account: normalizeProfileValue(profileForm.github_account),
+      branch: campus.branch,
+      division: campus.division,
       updated_at: new Date().toISOString(),
     };
 
@@ -357,9 +483,64 @@ export default function ProfilePage() {
       twitter_account: updatedProfile.twitter_account ?? "",
       linkedin_account: updatedProfile.linkedin_account ?? "",
       github_account: updatedProfile.github_account ?? "",
+      branch: updatedProfile.branch?.trim() ?? "",
+      division: updatedProfile.division?.trim() ?? "",
     });
     setNotice("Profile updated.");
     setIsSavingProfile(false);
+  };
+
+  const handleCampusContinue = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!supabase || !user) {
+      return;
+    }
+
+    const campus = resolveCampusForSave(profileForm.branch, profileForm.division);
+    if (!campus.ok) {
+      setErrorMessage(campus.message);
+      return;
+    }
+
+    if (!campus.branch || !campus.division) {
+      setErrorMessage("Choose your branch and class division to finish signing up.");
+      return;
+    }
+
+    setIsSavingCampus(true);
+    setNotice("");
+    setErrorMessage("");
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        branch: campus.branch,
+        division: campus.division,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id)
+      .select(profileSelect)
+      .single();
+
+    if (error) {
+      setErrorMessage(error.message);
+      setIsSavingCampus(false);
+      return;
+    }
+
+    const updatedProfile = data as UserProfile;
+    setProfile(updatedProfile);
+    setProfiles((current) =>
+      current.map((item) => (item.id === updatedProfile.id ? updatedProfile : item)),
+    );
+    setProfileForm((current) => ({
+      ...current,
+      branch: updatedProfile.branch?.trim() ?? "",
+      division: updatedProfile.division?.trim() ?? "",
+    }));
+    setNotice("You are all set — welcome to vitsocial.xyz.");
+    setIsSavingCampus(false);
   };
 
   const handleSendFriendRequest = async (targetProfile: UserProfile) => {
@@ -529,16 +710,27 @@ export default function ProfilePage() {
                 {displayName}
               </h1>
               <p className="mt-1 break-words text-xs text-[#606770]">{user?.email}</p>
+              {profile?.branch?.trim() && profile.division?.trim() ? (
+                <p className="mt-2 text-xs font-semibold text-[#4B4F56]">
+                  {profile.branch} · Division {profile.division}
+                </p>
+              ) : profile ? (
+                <p className="mt-2 text-xs text-[#606770]">
+                  Complete the setup form to add yours.
+                </p>
+              ) : null}
               <p className="mt-3 min-h-10 text-sm leading-snug text-[#1C1E21]">
                 {profile?.bio || "Add a short bio so other VIT students know you."}
               </p>
             </div>
           </section>
 
-          <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
-            <h2 className="border-b border-[#DADDE1] bg-[#F5F6F7] px-3 py-2 text-sm font-bold text-[#4B4F56]">
-              Contact Info
-            </h2>
+          {!needsCampusChoice ? (
+            <>
+              <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
+                <h2 className="border-b border-[#DADDE1] bg-[#F5F6F7] px-3 py-2 text-sm font-bold text-[#4B4F56]">
+                  Contact Info
+                </h2>
             <div className="space-y-2 p-3 text-sm">
               {(
                 [
@@ -595,9 +787,58 @@ export default function ProfilePage() {
               )}
             </div>
           </section>
+            </>
+          ) : null}
         </aside>
 
         <div className="space-y-4">
+          {user && profile && needsCampusChoice ? (
+            <section className="rounded border-2 border-[#3B5998] bg-white shadow-sm">
+              <div className="border-b border-[#DADDE1] bg-[#E8EEF7] px-4 py-3">
+                <h2
+                  className="m-0 text-base font-bold text-[#0E385F]"
+                  style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
+                >
+                  Welcome — choose your branch and division
+                </h2>
+                <p className="mt-1 text-xs text-[#606770]">
+                  Pick your programme branch and class division. You need both to use the directory
+                  and friend features.
+                </p>
+              </div>
+              <form className="space-y-3 p-4" onSubmit={handleCampusContinue}>
+                {errorMessage ? (
+                  <p className="border border-[#E41E3F]/40 bg-[#FFE4E1] p-2 text-xs font-medium text-[#7f1d1d]">
+                    {errorMessage}
+                  </p>
+                ) : null}
+                {notice ? (
+                  <p className="border border-[#9CB4D2] bg-[#F0F2F5] p-2 text-xs font-medium text-[#0E385F]">
+                    {notice}
+                  </p>
+                ) : null}
+                <BranchDivisionFields
+                  branch={profileForm.branch}
+                  division={profileForm.division}
+                  onBranchChange={(value) => handleProfileChange("branch", value)}
+                  onDivisionChange={(value) => handleProfileChange("division", value)}
+                  disabled={isSavingCampus}
+                  idPrefix="onboarding"
+                />
+                <div className="text-right">
+                  <button
+                    type="submit"
+                    disabled={isLoading || isSavingCampus || !user}
+                    className="h-[26px] border border-[#29487D] bg-[#4267B2] px-4 text-sm font-bold leading-[24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.1)] enabled:cursor-pointer enabled:hover:bg-[#365899] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSavingCampus ? "Saving..." : "Continue"}
+                  </button>
+                </div>
+              </form>
+            </section>
+          ) : null}
+          {!needsCampusChoice ? (
+            <>
           <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
             <div className="border-b border-[#DADDE1] bg-[#F5F6F7] px-4 py-2">
               <h2
@@ -634,6 +875,15 @@ export default function ProfilePage() {
                   placeholder="Write a short intro..."
                 />
               </label>
+
+              <BranchDivisionFields
+                branch={profileForm.branch}
+                division={profileForm.division}
+                onBranchChange={(value) => handleProfileChange("branch", value)}
+                onDivisionChange={(value) => handleProfileChange("division", value)}
+                disabled={isSavingProfile}
+                idPrefix="edit"
+              />
 
               <div className="grid gap-3 sm:grid-cols-2">
                 {(
@@ -770,6 +1020,8 @@ export default function ProfilePage() {
               )}
             </div>
           </section>
+            </>
+          ) : null}
         </div>
       </main>
     </div>
