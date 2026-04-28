@@ -22,7 +22,12 @@ export async function getMongoClient(): Promise<MongoClient> {
   }
 
   if (!connectPromise) {
-    connectPromise = MongoClient.connect(uri).then((connected) => {
+    connectPromise = MongoClient.connect(uri, {
+      maxPoolSize: 1,
+      minPoolSize: 0,
+      serverSelectionTimeoutMS: 15_000,
+      connectTimeoutMS: 15_000,
+    }).then((connected) => {
       client = connected;
       return connected;
     });

@@ -66,19 +66,24 @@ Helpful at scale; the app runs without it.
 
 This is **not** a `NEXT_PUBLIC_*` variable; it does not need to be in the OpenNext **build** env for the client bundle, but it **must** exist at **Worker runtime** for `/api/posts`.
 
-[`src/app/api/posts/route.ts`](../src/app/api/posts/route.ts) uses `export const runtime = "nodejs"` so the route can use the **`mongodb` driver** against Atlas. Confirm **`GET`/`POST /api/posts`** in staging. If TCP from Workers is problematic for your setup, MongoDB offers the **[Atlas Data API](https://www.mongodb.com/docs/atlas/api/data-api/)** as an alternative.
+[`src/app/api/posts/route.ts`](../src/app/api/posts/route.ts) uses `export const runtime = "nodejs"` so the route targets Node-style APIs. This repo also sets **`nodejs_compat_v2`** in [`wrangler.jsonc`](../wrangler.jsonc) and uses a **small Mongo pool** in [`mongodb.ts`](../src/lib/mongodb.ts), which Cloudflare recommends for the official `mongodb` driver. **Redeploy after pulling** so Workers pick up `wrangler` changes.
 
 More Cloudflare context: [`README.cloudflare.md`](../README.cloudflare.md).
 
-### “Could not read server response” / empty body on the feed
+### HTTP 500 with an HTML page (`<!DOCTYPE html>`, IE conditional comments)
 
-That usually means **`/api/posts` did not return JSON** (empty body, HTML error page, or a crash before the handler finished). After deploying, check:
+That response is **Cloudflare’s generic error page**, not your API’s JSON. It usually means the **Worker crashed or hit a platform limit** before [`route.ts`](../src/app/api/posts/route.ts) could return `{ "error": ... }`. A common cause is **MongoDB’s Node driver + TCP/TLS** misbehaving on a given Workers + OpenNext build.
 
-1. **`MONGODB_URI`** is set as a **secret** on the Worker and you **redeployed** after saving.
-2. Atlas **Network Access** allows your traffic (often **`0.0.0.0/0`** for serverless).
-3. **Worker logs** (dashboard **Logs** or `wrangler tail`) for Mongo connection or runtime errors.
+**Try in order:**
 
-The API route is wrapped so unexpected errors should return **`{ "error": "..." }`** with HTTP 500 when the handler runs; if you still see empty or HTML responses, the failure may be at the platform edge (timeout, route not bound, etc.).
+1. **Redeploy** with the latest repo `wrangler.jsonc` (**`nodejs_compat` + `nodejs_compat_v2`**) and driver pool options in `mongodb.ts`.
+2. **Logs:** Cloudflare dashboard → your Worker → **Logs**, or run `npx wrangler tail` while opening `/feed` — copy the stack trace if any.
+3. **Atlas:** confirm **Network Access** allows **`0.0.0.0/0`** (or your chosen rule) and the URI password is correct (special chars URL-encoded).
+4. If it **still** returns HTML 500: host the app on a **full Node** platform for production (this repo supports **[Vercel](./README.vercel.md)** — the `mongodb` driver is well supported there), or run a tiny **separate Node service** only for `/api/posts` and point the frontend at it (larger change).
+
+### “Could not read server response” / shorter non-JSON errors
+
+Same checklist as above; the feed UI also shows **HTTP status** and a **text preview** when the body is not JSON.
 
 ## CLI vs the running app
 

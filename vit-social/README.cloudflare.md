@@ -79,7 +79,9 @@ The friend feed uses MongoDB via the **`mongodb`** Node driver. Configure at **r
 - **`MONGODB_URI`** — use **`wrangler secret put MONGODB_URI`** (or Cloudflare **Secrets**) so it is never in source control. Do **not** add this as a `NEXT_PUBLIC_*` variable.
 - **`MONGODB_DB_NAME`** — optional; defaults to `vit_social`. Can be a plain `vars` entry if non-sensitive.
 
-The route handler sets **`export const runtime = "nodejs"`** so OpenNext can run it on a Node-compatible surface. **Verify in staging** that your Worker can connect to **MongoDB Atlas**. If not, use the [Atlas Data API](https://www.mongodb.com/docs/atlas/api/data-api/) or host the post API on a full Node runtime. Details: [`docs/mongodb-setup.md`](./docs/mongodb-setup.md).
+The route handler sets **`export const runtime = "nodejs"`**. [`wrangler.jsonc`](./wrangler.jsonc) includes **`nodejs_compat`** and **`nodejs_compat_v2`**, which Cloudflare’s docs and MongoDB’s examples use so the official **`mongodb`** driver can open TLS to Atlas. [`src/lib/mongodb.ts`](./src/lib/mongodb.ts) uses a **small connection pool** suited to Workers.
+
+If **`/api/posts`** still returns **HTTP 500 with an HTML body** (Cloudflare error page), the Worker is likely crashing before the route returns JSON — check **Worker logs** / `wrangler tail`, Atlas **network allowlist**, and redeploy after changing `wrangler.jsonc`. As a fallback, run production on **[Vercel](./README.vercel.md)** (full Node) or a separate Node API for posts. More detail: [`docs/mongodb-setup.md`](./docs/mongodb-setup.md).
 
 ### OAuth / redirects
 
