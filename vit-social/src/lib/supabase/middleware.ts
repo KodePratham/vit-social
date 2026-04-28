@@ -34,7 +34,10 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (user && !isAllowedVitEmail(user.email)) {
-    if (request.nextUrl.pathname.startsWith("/profile")) {
+    if (
+      request.nextUrl.pathname.startsWith("/profile") ||
+      request.nextUrl.pathname.startsWith("/friends")
+    ) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       url.search = "?error=domain";
@@ -44,7 +47,11 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  if (request.nextUrl.pathname.startsWith("/profile") && !user) {
+  if (
+    (request.nextUrl.pathname.startsWith("/profile") ||
+      request.nextUrl.pathname.startsWith("/friends")) &&
+    !user
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
