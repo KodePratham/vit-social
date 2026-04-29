@@ -72,6 +72,17 @@ This mirrors Vercel, where those values are available when `next build` runs.
 
 Also define the same keys for the **Worker** runtime (dashboard **Settings → Variables** for the worker, or `vars` in [`wrangler.jsonc`](./wrangler.jsonc) for public values, or `wrangler secret put` only for truly private server secrets). Server-side rendering and route handlers read `process.env` in the Worker.
 
+### MongoDB (feed / `POST`+`GET` `/api/posts`)
+
+The friend feed uses MongoDB via the **`mongodb`** Node driver. Configure at **runtime** (and in CI if you run integration tests against a real cluster):
+
+- **`MONGODB_URI`** — use **`wrangler secret put MONGODB_URI`** (or Cloudflare **Secrets**) so it is never in source control. Do **not** add this as a `NEXT_PUBLIC_*` variable.
+- **`MONGODB_DB_NAME`** — optional; defaults to `vit_social`. Can be a plain `vars` entry if non-sensitive.
+
+The route handler sets **`export const runtime = "nodejs"`**. [`wrangler.jsonc`](./wrangler.jsonc) includes **`nodejs_compat`** and **`nodejs_compat_v2`**, which Cloudflare’s docs and MongoDB’s examples use so the official **`mongodb`** driver can open TLS to Atlas. [`src/lib/mongodb.ts`](./src/lib/mongodb.ts) uses a **small connection pool** suited to Workers.
+
+If **`/api/posts`** still returns **HTTP 500 with an HTML body** (Cloudflare error page), the Worker is likely crashing before the route returns JSON — check **Worker logs** / `wrangler tail`, Atlas **network allowlist**, and redeploy after changing `wrangler.jsonc`. As a fallback, run production on **[Vercel](./README.vercel.md)** (full Node) or a separate Node API for posts. More detail: [`docs/mongodb-setup.md`](./docs/mongodb-setup.md).
+
 ### OAuth / redirects
 
 After you know the public URL (custom domain or `*.workers.dev`), update:

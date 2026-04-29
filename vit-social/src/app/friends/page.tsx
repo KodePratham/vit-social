@@ -378,6 +378,12 @@ export default function FriendsPage() {
             >
               Profile
             </Link>
+            <Link
+              href="/feed"
+              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
+            >
+              Feed
+            </Link>
             {!isLoading && user?.email ? (
               <span className="hidden max-w-[12rem] truncate text-xs text-white/90 sm:inline">
                 {user.email}

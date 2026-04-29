@@ -27,6 +27,8 @@ bun run dev
 
 4. Open `http://localhost:3000`
 
+**MongoDB (feed / posts):** The friend-only feed uses **MongoDB Atlas**. Set **`MONGODB_URI`** (server-only) in `.env.local`. See **[docs/mongodb-setup.md](./docs/mongodb-setup.md)** for Atlas setup, secrets on Cloudflare, and security notes.
+
 ## Google sign-in: where to get each value
 
 This app uses **Supabase** as the OAuth bridge: users sign in with Google **through** Supabase. You will create **one OAuth client in Google Cloud** and paste its credentials into **Supabase** (not into `.env`).

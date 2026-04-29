@@ -11,7 +11,6 @@ import {
   getSocialHref,
   profileSelect,
   type FriendRequest,
-  type SocialField,
   type UserProfile,
 } from "@/lib/profile-shared";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
@@ -595,6 +594,12 @@ export default function ProfilePage() {
             vitsocial<span className="font-normal">.xyz</span>
           </Link>
           <div className="flex flex-wrap items-center justify-end gap-2 text-sm">
+            <Link
+              href="/feed"
+              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
+            >
+              Feed
+            </Link>
             <Link
               href="/friends"
               className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"

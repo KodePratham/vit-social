@@ -34,9 +34,14 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (user && !isAllowedVitEmail(user.email)) {
+    if (request.nextUrl.pathname.startsWith("/api/posts")) {
+      return NextResponse.json({ error: "Only @vit.edu accounts can use this app." }, { status: 403 });
+    }
+
     if (
       request.nextUrl.pathname.startsWith("/profile") ||
-      request.nextUrl.pathname.startsWith("/friends")
+      request.nextUrl.pathname.startsWith("/friends") ||
+      request.nextUrl.pathname.startsWith("/feed")
     ) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
@@ -49,7 +54,8 @@ export async function updateSession(request: NextRequest) {
 
   if (
     (request.nextUrl.pathname.startsWith("/profile") ||
-      request.nextUrl.pathname.startsWith("/friends")) &&
+      request.nextUrl.pathname.startsWith("/friends") ||
+      request.nextUrl.pathname.startsWith("/feed")) &&
     !user
   ) {
     const url = request.nextUrl.clone();
