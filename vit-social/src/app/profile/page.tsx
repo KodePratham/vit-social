@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { SiteHeader } from "@/components/site-header";
 import { BRANCH_CONFIG, getDivisionsForBranch, isValidBranchDivision } from "@/lib/branches";
 import {
   friendRequestSelect,
@@ -76,8 +77,7 @@ function BranchDivisionFields({
   idPrefix: string;
 }) {
   const divisions = getDivisionsForBranch(branch);
-  const selectClassName =
-    "mt-1 h-9 w-full rounded-none border border-[#BDC7D8] bg-white px-2 text-sm font-normal text-[#1C1E21] outline-none focus:border-[#3B5998] disabled:opacity-60";
+  const selectClassName = "fb-input mt-1";
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -537,21 +537,29 @@ export default function ProfilePage() {
     const incomingRequest = pendingIncomingByRequesterId.get(item.id);
 
     if (friendIds.has(item.id)) {
-      return <span className="text-xs font-semibold text-[#606770]">Friends</span>;
+      return (
+        <span className="shrink-0 rounded border border-[#c7d2e3] bg-[#eef1f7] px-2 py-1 text-xs font-semibold text-[color:var(--fb-text-dim)]">
+          Friends
+        </span>
+      );
     }
 
     if (pendingOutgoingReceiverIds.has(item.id)) {
-      return <span className="text-xs font-semibold text-[#606770]">Request sent</span>;
+      return (
+        <span className="shrink-0 rounded border border-[#c7d2e3] bg-[#eef1f7] px-2 py-1 text-xs font-semibold text-[color:var(--fb-text-dim)]">
+          Request sent
+        </span>
+      );
     }
 
     if (incomingRequest) {
       return (
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
           <button
             type="button"
             onClick={() => handleRespondToFriendRequest(incomingRequest, "accepted")}
             disabled={busyRequestId === incomingRequest.id}
-            className="border border-[#29487D] bg-[#4267B2] px-2 py-1 text-xs font-bold text-white disabled:opacity-60"
+            className="fb-btn-primary"
           >
             Accept
           </button>
@@ -559,7 +567,7 @@ export default function ProfilePage() {
             type="button"
             onClick={() => handleRespondToFriendRequest(incomingRequest, "rejected")}
             disabled={busyRequestId === incomingRequest.id}
-            className="border border-[#999] bg-[#F5F6F7] px-2 py-1 text-xs font-bold text-[#4B4F56] disabled:opacity-60"
+            className="fb-btn-secondary"
           >
             Reject
           </button>
@@ -572,84 +580,48 @@ export default function ProfilePage() {
         type="button"
         onClick={() => handleSendFriendRequest(item)}
         disabled={busyProfileId === item.id}
-        className="border border-[#29487D] bg-[#4267B2] px-2 py-1 text-xs font-bold text-white disabled:opacity-60"
+        className="fb-btn-primary shrink-0"
       >
-        {busyProfileId === item.id ? "Sending..." : "Add Friend"}
+        {busyProfileId === item.id ? "Sending…" : "Add Friend"}
       </button>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#E7EBF2] text-[#1C1E21]">
-      <header
-        className="border-b border-[#1E3A5F]/30 bg-gradient-to-b from-[#3B5998] to-[#3B5998] py-3 pl-2 pr-3 text-white"
-        style={{ fontFamily: "inherit" }}
-      >
-        <div className="mx-auto flex max-w-[980px] items-center justify-between gap-3 px-1">
-          <Link
-            href="/"
-            className="select-none text-[1.4rem] font-bold leading-none tracking-[-0.5px] text-white decoration-white hover:underline sm:text-[1.6rem]"
-            style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-          >
-            vitsocial<span className="font-normal">.xyz</span>
-          </Link>
-          <div className="flex flex-wrap items-center justify-end gap-2 text-sm">
-            <Link
-              href="/feed"
-              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
-            >
-              Feed
-            </Link>
-            <Link
-              href="/friends"
-              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
-            >
-              Friends
-            </Link>
-            {!isLoading && user?.email ? (
-              <span className="hidden max-w-[12rem] truncate text-xs text-white/90 sm:inline">
-                {user.email}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              onClick={handleSignOut}
-              disabled={isSigningOut || isLoading}
-              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white enabled:hover:bg-white/20 disabled:opacity-50"
-            >
-              {isSigningOut ? "..." : "Log out"}
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[var(--fb-bg)] text-[var(--fb-text)]">
+      <SiteHeader
+        userEmail={!isLoading ? user?.email ?? null : null}
+        onSignOut={handleSignOut}
+        isBusy={isSigningOut || isLoading}
+      />
 
       <main className="mx-auto grid max-w-[980px] gap-4 px-3 py-4 sm:px-4 md:grid-cols-[260px_1fr]">
         <aside className="space-y-3">
-          <section className="overflow-hidden rounded border border-[#BDC7D8] bg-white shadow-sm">
-            <div className="h-24 bg-gradient-to-b from-[#6D84B4] to-[#3B5998]" />
+          <section className="fb-panel overflow-hidden">
+            <div
+              className="h-24"
+              style={{ background: "linear-gradient(to bottom, #6d84b4 0%, #3b5998 100%)" }}
+            />
             <div className="px-3 pb-4">
               {profile ? (
                 <div className="-mt-10">
                   <ProfileAvatar profile={profile} name={displayName} size="h-20 w-20 text-2xl" />
                 </div>
               ) : null}
-              <h1
-                className="m-0 mt-3 text-xl font-bold leading-tight text-[#0E385F]"
-                style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-              >
-                {displayName}
-              </h1>
-              <p className="mt-1 break-words text-xs text-[#606770]">{user?.email}</p>
+              <h1 className="fb-section-title m-0 mt-3 text-xl leading-tight">{displayName}</h1>
+              <p className="mt-1 break-words text-xs text-[color:var(--fb-text-dim)]">
+                {user?.email}
+              </p>
               {profile?.branch?.trim() && profile.division?.trim() ? (
-                <p className="mt-2 text-xs font-semibold text-[#4B4F56]">
+                <p className="mt-2 text-xs font-semibold text-[#4b4f56]">
                   {profile.branch} · Division {profile.division}
                 </p>
               ) : profile ? (
-                <p className="mt-2 text-xs text-[#606770]">
+                <p className="mt-2 text-xs text-[color:var(--fb-text-dim)]">
                   Complete the setup form to add yours.
                 </p>
               ) : null}
-              <p className="mt-3 min-h-10 text-sm leading-snug text-[#1C1E21]">
+              <p className="mt-3 min-h-10 text-sm leading-snug text-[var(--fb-text)]">
                 {profile?.bio || "Add a short bio so other VIT students know you."}
               </p>
             </div>
@@ -657,8 +629,8 @@ export default function ProfilePage() {
 
           {!needsCampusChoice ? (
             <>
-              <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
-                <h2 className="border-b border-[#DADDE1] bg-[#F5F6F7] px-3 py-2 text-sm font-bold text-[#4B4F56]">
+              <section className="fb-panel">
+                <h2 className="fb-panel-header m-0 text-sm font-bold text-[#4b4f56]">
                   Contact Info
                 </h2>
             <div className="space-y-2 p-3 text-sm">
@@ -674,18 +646,18 @@ export default function ProfilePage() {
 
                 return (
                   <div key={field} className="flex justify-between gap-3">
-                    <span className="font-semibold text-[#606770]">{label}</span>
+                    <span className="font-semibold text-[color:var(--fb-text-dim)]">{label}</span>
                     {value ? (
                       <a
                         href={getSocialHref(field, value)}
                         target="_blank"
                         rel="noreferrer"
-                        className="min-w-0 truncate text-right font-semibold text-[#385898]"
+                        className="min-w-0 truncate text-right font-semibold text-[color:var(--fb-link)]"
                       >
                         {value}
                       </a>
                     ) : (
-                      <span className="text-[#8A8D91]">Not added</span>
+                      <span className="text-[color:var(--fb-text-muted)]">Not added</span>
                     )}
                   </div>
                 );
@@ -693,17 +665,17 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
-            <div className="flex items-center justify-between gap-2 border-b border-[#DADDE1] bg-[#F5F6F7] px-3 py-2">
-              <h2 className="m-0 text-sm font-bold text-[#4B4F56]">Friends</h2>
+          <section className="fb-panel">
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--fb-divider)] bg-[color:var(--fb-panel-header)] px-3 py-2">
+              <h2 className="m-0 text-sm font-bold text-[#4b4f56]">Friends</h2>
               <Link
                 href="/friends"
-                className="shrink-0 text-xs font-semibold text-[#385898] hover:underline"
+                className="shrink-0 text-xs font-semibold text-[color:var(--fb-link)] hover:underline"
               >
                 View all
               </Link>
             </div>
-            <div className="divide-y divide-[#E9EBEE]">
+            <div className="divide-y divide-[#e9ebee]">
               {friends.length > 0 ? (
                 friends.map((item) => {
                   const name = getDisplayName(item);
@@ -712,14 +684,18 @@ export default function ProfilePage() {
                     <article key={item.id} className="flex items-center gap-2 p-3">
                       <ProfileAvatar profile={item} name={name} size="h-9 w-9" />
                       <div className="min-w-0">
-                        <h3 className="m-0 truncate text-sm font-bold text-[#385898]">{name}</h3>
-                        <p className="m-0 truncate text-xs text-[#606770]">{item.email}</p>
+                        <h3 className="m-0 truncate text-sm font-bold text-[color:var(--fb-link)]">
+                          {name}
+                        </h3>
+                        <p className="m-0 truncate text-xs text-[color:var(--fb-text-dim)]">
+                          {item.email}
+                        </p>
                       </div>
                     </article>
                   );
                 })
               ) : (
-                <p className="p-3 text-sm text-[#606770]">No friends yet.</p>
+                <p className="p-3 text-sm text-[color:var(--fb-text-dim)]">No friends yet.</p>
               )}
             </div>
           </section>
@@ -729,27 +705,24 @@ export default function ProfilePage() {
 
         <div className="space-y-4">
           {user && profile && needsCampusChoice ? (
-            <section className="rounded border-2 border-[#3B5998] bg-white shadow-sm">
-              <div className="border-b border-[#DADDE1] bg-[#E8EEF7] px-4 py-3">
-                <h2
-                  className="m-0 text-base font-bold text-[#0E385F]"
-                  style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-                >
+            <section className="fb-panel border-2 border-[color:var(--fb-blue)]">
+              <div className="border-b border-[color:var(--fb-divider)] bg-[#e8eef7] px-4 py-3">
+                <h2 className="fb-section-title m-0 text-base">
                   Welcome — choose your branch and division
                 </h2>
-                <p className="mt-1 text-xs text-[#606770]">
+                <p className="mt-1 text-xs text-[color:var(--fb-text-dim)]">
                   Pick your programme branch and class division. You need both to use the directory
                   and friend features.
                 </p>
               </div>
               <form className="space-y-3 p-4" onSubmit={handleCampusContinue}>
                 {errorMessage ? (
-                  <p className="border border-[#E41E3F]/40 bg-[#FFE4E1] p-2 text-xs font-medium text-[#7f1d1d]">
+                  <p className="border border-[color:var(--fb-error-border)] bg-[color:var(--fb-error-bg)] p-2 text-xs font-medium text-[color:var(--fb-error-text)]">
                     {errorMessage}
                   </p>
                 ) : null}
                 {notice ? (
-                  <p className="border border-[#9CB4D2] bg-[#F0F2F5] p-2 text-xs font-medium text-[#0E385F]">
+                  <p className="border border-[color:var(--fb-success-border)] bg-[color:var(--fb-success-bg)] p-2 text-xs font-medium text-[#0e385f]">
                     {notice}
                   </p>
                 ) : null}
@@ -765,9 +738,9 @@ export default function ProfilePage() {
                   <button
                     type="submit"
                     disabled={isLoading || isSavingCampus || !user}
-                    className="h-[26px] border border-[#29487D] bg-[#4267B2] px-4 text-sm font-bold leading-[24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.1)] enabled:cursor-pointer enabled:hover:bg-[#365899] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="fb-btn-primary fb-btn-lg"
                   >
-                    {isSavingCampus ? "Saving..." : "Continue"}
+                    {isSavingCampus ? "Saving…" : "Continue"}
                   </button>
                 </div>
               </form>
@@ -775,39 +748,34 @@ export default function ProfilePage() {
           ) : null}
           {!needsCampusChoice ? (
             <>
-          <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
-            <div className="border-b border-[#DADDE1] bg-[#F5F6F7] px-4 py-2">
-              <h2
-                className="m-0 text-base font-bold text-[#0E385F]"
-                style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-              >
-                Edit Profile
-              </h2>
-              <p className="mt-1 text-xs text-[#606770]">
+          <section className="fb-panel">
+            <div className="fb-panel-header">
+              <h2 className="fb-section-title m-0 text-base">Edit Profile</h2>
+              <p className="mt-1 text-xs text-[color:var(--fb-text-dim)]">
                 Share a little about yourself and where classmates can find you.
               </p>
             </div>
 
             <form className="space-y-3 p-4" onSubmit={handleProfileSave}>
               {errorMessage ? (
-                <p className="border border-[#E41E3F]/40 bg-[#FFE4E1] p-2 text-xs font-medium text-[#7f1d1d]">
+                <p className="border border-[color:var(--fb-error-border)] bg-[color:var(--fb-error-bg)] p-2 text-xs font-medium text-[color:var(--fb-error-text)]">
                   {errorMessage}
                 </p>
               ) : null}
               {notice ? (
-                <p className="border border-[#9CB4D2] bg-[#F0F2F5] p-2 text-xs font-medium text-[#0E385F]">
+                <p className="border border-[color:var(--fb-success-border)] bg-[color:var(--fb-success-bg)] p-2 text-xs font-medium text-[#0e385f]">
                   {notice}
                 </p>
               ) : null}
 
-              <label className="block text-sm font-semibold text-[#4B4F56]">
+              <label className="block text-sm font-semibold text-[#4b4f56]">
                 Bio
                 <textarea
                   value={profileForm.bio}
                   onChange={(event) => handleProfileChange("bio", event.target.value)}
                   maxLength={280}
                   rows={4}
-                  className="mt-1 w-full resize-none rounded-none border border-[#BDC7D8] bg-white p-2 text-sm font-normal text-[#1C1E21] outline-none focus:border-[#3B5998]"
+                  className="fb-input mt-1 resize-none"
                   placeholder="Write a short intro..."
                 />
               </label>
@@ -830,44 +798,39 @@ export default function ProfilePage() {
                     ["github_account", "GitHub", "username"],
                   ] as const
                 ).map(([field, label, placeholder]) => (
-                  <label key={field} className="block text-sm font-semibold text-[#4B4F56]">
+                  <label key={field} className="block text-sm font-semibold text-[#4b4f56]">
                     {label}
                     <input
                       value={profileForm[field]}
                       onChange={(event) => handleProfileChange(field, event.target.value)}
                       maxLength={120}
-                      className="mt-1 h-9 w-full rounded-none border border-[#BDC7D8] bg-white px-2 text-sm font-normal text-[#1C1E21] outline-none focus:border-[#3B5998]"
+                      className="fb-input mt-1"
                       placeholder={placeholder}
                     />
                   </label>
                 ))}
               </div>
 
-              <div className="border-t border-[#DADDE1] pt-3 text-right">
+              <div className="border-t border-[color:var(--fb-divider)] pt-3 text-right">
                 <button
                   type="submit"
                   disabled={isLoading || isSavingProfile || !user}
-                  className="h-[26px] border border-[#29487D] bg-[#4267B2] px-4 text-sm font-bold leading-[24px] text-white shadow-[0_1px_1px_rgba(0,0,0,0.1)] enabled:cursor-pointer enabled:hover:bg-[#365899] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="fb-btn-primary fb-btn-lg"
                 >
-                  {isSavingProfile ? "Saving..." : "Save Profile"}
+                  {isSavingProfile ? "Saving…" : "Save Profile"}
                 </button>
               </div>
             </form>
           </section>
 
-          <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
-            <div className="border-b border-[#DADDE1] bg-[#F5F6F7] px-4 py-2">
-              <h2
-                className="m-0 text-base font-bold text-[#0E385F]"
-                style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-              >
-                Friend Requests
-              </h2>
-              <p className="mt-1 text-xs text-[#606770]">
+          <section className="fb-panel">
+            <div className="fb-panel-header">
+              <h2 className="fb-section-title m-0 text-base">Friend Requests</h2>
+              <p className="mt-1 text-xs text-[color:var(--fb-text-dim)]">
                 Accept or reject people who want to connect with you.
               </p>
             </div>
-            <div className="divide-y divide-[#E9EBEE]">
+            <div className="divide-y divide-[#e9ebee]">
               {pendingIncomingRequests.length > 0 ? (
                 pendingIncomingRequests.map((request) => {
                   const requester = profileById.get(request.requester_id);
@@ -881,8 +844,10 @@ export default function ProfilePage() {
                     <article key={request.id} className="flex items-center gap-3 p-4">
                       <ProfileAvatar profile={requester} name={name} size="h-12 w-12" />
                       <div className="min-w-0 flex-1">
-                        <h3 className="m-0 truncate text-sm font-bold text-[#385898]">{name}</h3>
-                        <p className="m-0 mt-1 truncate text-xs text-[#606770]">
+                        <h3 className="m-0 truncate text-sm font-bold text-[color:var(--fb-link)]">
+                          {name}
+                        </h3>
+                        <p className="m-0 mt-1 truncate text-xs text-[color:var(--fb-text-dim)]">
                           {requester.email}
                         </p>
                       </div>
@@ -891,44 +856,38 @@ export default function ProfilePage() {
                   );
                 })
               ) : (
-                <p className="p-4 text-sm text-[#606770]">No pending friend requests.</p>
+                <p className="p-4 text-sm text-[color:var(--fb-text-dim)]">
+                  No pending friend requests.
+                </p>
               )}
             </div>
           </section>
 
-          <section className="rounded border border-[#BDC7D8] bg-white shadow-sm">
-            <div className="border-b border-[#DADDE1] bg-[#F5F6F7] px-4 py-2">
-              <h2
-                className="m-0 text-base font-bold text-[#0E385F]"
-                style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-              >
-                Search People on vitsocial.xyz
-              </h2>
-              <p className="mt-1 text-xs text-[#606770]">
+          <section className="fb-panel">
+            <div className="fb-panel-header">
+              <h2 className="fb-section-title m-0 text-base">Search People on vitsocial.xyz</h2>
+              <p className="mt-1 text-xs text-[color:var(--fb-text-dim)]">
                 Search by name, email, or bio to send friend requests.
               </p>
             </div>
 
-            <form className="flex gap-2 border-b border-[#E9EBEE] p-4" onSubmit={handleSearch}>
+            <form className="flex gap-2 border-b border-[#e9ebee] p-4" onSubmit={handleSearch}>
               <input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                className="h-9 min-w-0 flex-1 rounded-none border border-[#BDC7D8] bg-white px-2 text-sm text-[#1C1E21] outline-none focus:border-[#3B5998]"
+                className="fb-input flex-1"
                 placeholder="Search people..."
               />
-              <button
-                type="submit"
-                className="h-9 border border-[#29487D] bg-[#4267B2] px-4 text-sm font-bold text-white"
-              >
+              <button type="submit" className="fb-btn-primary">
                 Search
               </button>
             </form>
 
-            <div className="divide-y divide-[#E9EBEE]">
+            <div className="divide-y divide-[#e9ebee]">
               {isLoading ? (
-                <p className="p-4 text-sm text-[#606770]">Loading people...</p>
+                <p className="p-4 text-sm text-[color:var(--fb-text-dim)]">Loading people…</p>
               ) : !activeSearch ? (
-                <p className="p-4 text-sm text-[#606770]">
+                <p className="p-4 text-sm text-[color:var(--fb-text-dim)]">
                   Enter a search term to find VIT students.
                 </p>
               ) : searchResults.length > 0 ? (
@@ -939,10 +898,14 @@ export default function ProfilePage() {
                     <article key={item.id} className="flex items-center gap-3 p-4">
                       <ProfileAvatar profile={item} name={name} size="h-12 w-12" />
                       <div className="min-w-0 flex-1">
-                        <h3 className="m-0 truncate text-sm font-bold text-[#385898]">{name}</h3>
-                        <p className="m-0 mt-1 truncate text-xs text-[#606770]">{item.email}</p>
+                        <h3 className="m-0 truncate text-sm font-bold text-[color:var(--fb-link)]">
+                          {name}
+                        </h3>
+                        <p className="m-0 mt-1 truncate text-xs text-[color:var(--fb-text-dim)]">
+                          {item.email}
+                        </p>
                         {item.bio ? (
-                          <p className="m-0 mt-2 text-sm leading-snug text-[#1C1E21]">
+                          <p className="m-0 mt-2 text-sm leading-snug text-[var(--fb-text)]">
                             {item.bio}
                           </p>
                         ) : null}
@@ -952,7 +915,9 @@ export default function ProfilePage() {
                   );
                 })
               ) : (
-                <p className="p-4 text-sm text-[#606770]">No people matched your search.</p>
+                <p className="p-4 text-sm text-[color:var(--fb-text-dim)]">
+                  No people matched your search.
+                </p>
               )}
             </div>
           </section>

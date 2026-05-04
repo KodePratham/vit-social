@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { SiteHeader } from "@/components/site-header";
 import { getDisplayName, type UserProfile } from "@/lib/profile-shared";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -35,6 +35,9 @@ function authorToProfile(author: FeedAuthor): UserProfile {
     github_account: null,
     branch: null,
     division: null,
+    seeking_roommate: false,
+    roommate_hostel_campus: null,
+    roommate_gender: null,
     created_at: "",
   };
 }
@@ -248,77 +251,36 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E7EBF2] text-[#1C1E21]">
-      <header
-        className="border-b border-[#1E3A5F]/30 bg-gradient-to-b from-[#3B5998] to-[#3B5998] py-3 pl-2 pr-3 text-white"
-        style={{ fontFamily: "inherit" }}
-      >
-        <div className="mx-auto flex max-w-[980px] items-center justify-between gap-3 px-1">
-          <Link
-            href="/"
-            className="select-none text-[1.4rem] font-bold leading-none tracking-[-0.5px] text-white decoration-white hover:underline sm:text-[1.6rem]"
-            style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-          >
-            vitsocial<span className="font-normal">.xyz</span>
-          </Link>
-          <div className="flex flex-wrap items-center justify-end gap-2 text-sm">
-            <Link
-              href="/profile"
-              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
-            >
-              Profile
-            </Link>
-            <Link
-              href="/friends"
-              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
-            >
-              Friends
-            </Link>
-            {!isLoading && user?.email ? (
-              <span className="hidden max-w-[12rem] truncate text-xs text-white/90 sm:inline">
-                {user.email}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              onClick={handleSignOut}
-              disabled={isSigningOut || isLoading}
-              className="rounded border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold text-white enabled:hover:bg-white/20 disabled:opacity-50"
-            >
-              {isSigningOut ? "..." : "Log out"}
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[var(--fb-bg)] text-[var(--fb-text)]">
+      <SiteHeader
+        userEmail={user?.email ?? null}
+        onSignOut={handleSignOut}
+        isBusy={isSigningOut || isLoading}
+      />
 
       <main className="mx-auto max-w-[640px] space-y-4 px-3 py-4 sm:px-4">
-        <div className="rounded border border-[#BDC7D8] bg-white shadow-sm">
-          <div className="border-b border-[#DADDE1] bg-[#F5F6F7] px-4 py-3">
-            <h1
-              className="m-0 text-lg font-bold text-[#0E385F]"
-              style={{ fontFamily: "Tahoma, Lucida Grande, Verdana, Arial, sans-serif" }}
-            >
-              Feed
-            </h1>
-            <p className="mt-1 text-xs text-[#606770]">
+        <div className="fb-panel">
+          <div className="fb-panel-header">
+            <h1 className="fb-section-title m-0 text-lg">Feed</h1>
+            <p className="mt-1 text-xs text-[color:var(--fb-text-dim)]">
               Posts from you and your friends. Only accepted friends can see each other&apos;s posts.
             </p>
           </div>
 
           {errorMessage ? (
-            <p className="border-b border-[#E41E3F]/40 bg-[#FFE4E1] p-3 text-xs font-medium text-[#7f1d1d]">
+            <p className="border-b border-[color:var(--fb-error-border)] bg-[color:var(--fb-error-bg)] p-3 text-xs font-medium text-[color:var(--fb-error-text)]">
               {errorMessage}
             </p>
           ) : null}
 
           {isLoading ? (
-            <p className="p-4 text-sm text-[#606770]">Loading...</p>
+            <p className="p-4 text-sm text-[color:var(--fb-text-dim)]">Loading…</p>
           ) : !user ? (
-            <p className="p-4 text-sm text-[#606770]">Sign in to see the feed.</p>
+            <p className="p-4 text-sm text-[color:var(--fb-text-dim)]">Sign in to see the feed.</p>
           ) : (
             <>
-              <form onSubmit={handleSubmit} className="border-b border-[#E9EBEE] p-4">
-                <label htmlFor="post-body" className="block text-xs font-semibold text-[#4B4F56]">
+              <form onSubmit={handleSubmit} className="border-b border-[#e9ebee] p-4">
+                <label htmlFor="post-body" className="block text-xs font-semibold text-[#4b4f56]">
                   Share something
                 </label>
                 <textarea
@@ -327,26 +289,28 @@ export default function FeedPage() {
                   onChange={(e) => setDraft(e.target.value)}
                   rows={4}
                   maxLength={8000}
-                  placeholder="What’s on your mind?"
-                  className="mt-2 w-full resize-y rounded-none border border-[#BDC7D8] bg-white p-2 text-sm text-[#1C1E21] outline-none focus:border-[#3B5998]"
+                  placeholder="What's on your mind?"
+                  className="fb-input mt-2 resize-y"
                 />
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="text-xs text-[#8A8D91]">{draft.length} / 8000</span>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs text-[color:var(--fb-text-muted)]">
+                    {draft.length} / 8000
+                  </span>
                   <button
                     type="submit"
                     disabled={isPosting || !draft.trim()}
-                    className="border border-[#29487D] bg-[#4267B2] px-4 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                    className="fb-btn-primary"
                   >
-                    {isPosting ? "Posting..." : "Post"}
+                    {isPosting ? "Posting…" : "Post"}
                   </button>
                 </div>
               </form>
 
-              <div className="divide-y divide-[#E9EBEE]">
+              <div className="divide-y divide-[#e9ebee]">
                 {isLoadingPosts && posts.length === 0 ? (
-                  <p className="p-4 text-sm text-[#606770]">Loading posts...</p>
+                  <p className="p-4 text-sm text-[color:var(--fb-text-dim)]">Loading posts…</p>
                 ) : posts.length === 0 ? (
-                  <p className="p-4 text-sm text-[#606770]">
+                  <p className="p-4 text-sm text-[color:var(--fb-text-dim)]">
                     No posts yet. Add friends to see their updates, or write the first post.
                   </p>
                 ) : (
@@ -359,17 +323,21 @@ export default function FeedPage() {
                     return (
                       <article key={post.id} className="flex gap-3 p-4">
                         {author ? (
-                          <ProfileAvatar profile={authorToProfile(author)} name={display} size="h-10 w-10 text-sm" />
+                          <ProfileAvatar
+                            profile={authorToProfile(author)}
+                            name={display}
+                            size="h-10 w-10 text-sm"
+                          />
                         ) : (
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-[#BDC7D8] bg-[#E7EBF2] text-xs font-bold text-[#3B5998]">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-[color:var(--fb-panel-border)] bg-[var(--fb-bg)] text-xs font-bold text-[color:var(--fb-blue)]">
                             ?
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
-                            <span className="text-sm font-bold text-[#0E385F]">{display}</span>
+                            <span className="text-sm font-bold text-[#0e385f]">{display}</span>
                             <time
-                              className="text-xs text-[#8A8D91]"
+                              className="text-xs text-[color:var(--fb-text-muted)]"
                               dateTime={post.createdAt}
                               title={post.createdAt}
                             >
@@ -379,7 +347,7 @@ export default function FeedPage() {
                               })}
                             </time>
                           </div>
-                          <p className="mt-1 whitespace-pre-wrap text-sm leading-snug text-[#1C1E21]">
+                          <p className="mt-1 whitespace-pre-wrap text-sm leading-snug text-[var(--fb-text)]">
                             {post.body}
                           </p>
                         </div>
