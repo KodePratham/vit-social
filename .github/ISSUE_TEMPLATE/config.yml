@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/vit-social/vit-social/security/advisories/new
+    about: Report a security issue privately through GitHub Security Advisories.
+      See SECURITY.md for details.
+  - name: Questions and discussions
+    url: https://github.com/vit-social/vit-social/discussions
+    about: Use GitHub Discussions for open-ended questions about usage,
+      deployment, or the roadmap.

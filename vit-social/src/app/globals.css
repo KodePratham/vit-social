@@ -1,26 +1,47 @@
 @import "tailwindcss";
 
+/* -------------------------------------------------------------------------
+ * Retro Facebook palette (circa 2008-2010 "old blue")
+ * Kept as plain CSS variables so they work inside className="bg-[var(...)]".
+ * ----------------------------------------------------------------------- */
 :root {
   --fb-blue: #3b5998;
+  --fb-blue-dark: #29487d;
+  --fb-blue-darker: #1e3a5f;
+  --fb-blue-light: #8b9dc3;
+  --fb-blue-lighter: #dfe3ee;
+  --fb-link: #385898;
+  --fb-link-hover: #1d3b7a;
   --fb-bg: #e7ebf2;
-  --fb-text: #0e385f;
+  --fb-panel: #ffffff;
+  --fb-panel-border: #bdc7d8;
+  --fb-panel-header: #f5f6f7;
+  --fb-divider: #dadde1;
+  --fb-text: #1c1e21;
+  --fb-text-dim: #606770;
+  --fb-text-muted: #8a8d91;
+  --fb-success-bg: #f0f2f5;
+  --fb-success-border: #9cb4d2;
+  --fb-error-bg: #ffe4e1;
+  --fb-error-border: rgba(228, 30, 63, 0.4);
+  --fb-error-text: #7f1d1d;
 }
 
 @theme inline {
   --color-background: var(--fb-bg);
-  --color-foreground: #1c1e21;
+  --color-foreground: var(--fb-text);
   --font-sans: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
   --font-mono: "Lucida Console", "Courier New", monospace;
 }
 
 body {
-  color: #1c1e21;
+  color: var(--fb-text);
   font-family: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
-  background-color: #e7ebf2;
+  background-color: var(--fb-bg);
 }
 
 a {
-  color: #385898;
+  color: var(--fb-link);
 }
 
 a:hover {
@@ -30,4 +51,215 @@ a:hover {
 ::selection {
   background: #b3d4fc;
   color: inherit;
+}
+
+/* -------------------------------------------------------------------------
+ * Reusable retro-FB components.
+ *
+ * These are plain CSS classes (not @apply) so they render reliably with the
+ * Tailwind v4 preset and keep the old-school pixel shadow / bevel that the
+ * 2008 Facebook buttons had.
+ * ----------------------------------------------------------------------- */
+
+/* Primary action button: navy background, thin darker border, tiny bevel. */
+.fb-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--fb-blue-dark);
+  background-color: #4267b2;
+  color: #ffffff;
+  font-family: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 1px rgba(0, 0, 0, 0.08);
+  transition: background-color 120ms ease;
+}
+
+.fb-btn-primary:hover:not(:disabled) {
+  background-color: #365899;
+}
+
+.fb-btn-primary:active:not(:disabled) {
+  background-color: var(--fb-blue-dark);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.fb-btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Secondary / neutral button: light grey, darker grey border. */
+.fb-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid #8d949e;
+  background-color: #f5f6f7;
+  color: var(--fb-text);
+  font-family: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 #ffffff;
+  transition: background-color 120ms ease;
+}
+
+.fb-btn-secondary:hover:not(:disabled) {
+  background-color: #e9ebee;
+}
+
+.fb-btn-secondary:active:not(:disabled) {
+  background-color: #d8dade;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.fb-btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Destructive / reject button: matches secondary but with a warm tint. */
+.fb-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid #a94442;
+  background-color: #e8d0cf;
+  color: #7f1d1d;
+  font-family: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: background-color 120ms ease;
+}
+
+.fb-btn-danger:hover:not(:disabled) {
+  background-color: #dec0bf;
+}
+
+.fb-btn-danger:active:not(:disabled) {
+  background-color: #c9a9a8;
+}
+
+.fb-btn-danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Size variants — default is compact. Use fb-btn-lg for key CTAs. */
+.fb-btn-lg {
+  min-height: 34px;
+  padding: 0 18px;
+  font-size: 13px;
+}
+
+/* Navigation "tab" in the top blue header — high contrast, obvious hit box. */
+.fb-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-family: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.fb-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+  text-decoration: none;
+}
+
+.fb-nav-link[aria-current="page"],
+.fb-nav-link.is-active {
+  background-color: rgba(255, 255, 255, 0.28);
+  border-color: #ffffff;
+}
+
+.fb-nav-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Old-school "card" panel — white background, thin grey border, tiny shadow. */
+.fb-panel {
+  background-color: var(--fb-panel);
+  border: 1px solid var(--fb-panel-border);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.fb-panel-header {
+  background-color: var(--fb-panel-header);
+  border-bottom: 1px solid var(--fb-divider);
+  padding: 10px 16px;
+}
+
+.fb-panel-subheader {
+  background-color: #fafbfc;
+  border-bottom: 1px solid #e9ebee;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #4b4f56;
+}
+
+/* Inputs — sharp corners, navy focus ring, tailored for retro look. */
+.fb-input {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--fb-panel-border);
+  background-color: #ffffff;
+  font-family: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
+  font-size: 13px;
+  color: var(--fb-text);
+  outline: none;
+  border-radius: 0;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.fb-input:focus {
+  border-color: var(--fb-blue);
+  box-shadow: 0 0 0 1px rgba(59, 89, 152, 0.2);
+}
+
+.fb-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Small utility for the "section label" that appears above a card. */
+.fb-section-title {
+  color: #0e385f;
+  font-family: Tahoma, "Lucida Grande", Verdana, Arial, sans-serif;
+  font-weight: 700;
 }

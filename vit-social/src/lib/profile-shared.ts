@@ -10,6 +10,9 @@ export type UserProfile = {
   github_account: string | null;
   branch: string | null;
   division: string | null;
+  seeking_roommate: boolean;
+  roommate_hostel_campus: string | null;
+  roommate_gender: string | null;
   created_at: string;
 };
 
@@ -29,7 +32,7 @@ export type SocialField =
   | "github_account";
 
 export const profileSelect =
-  "id,email,full_name,avatar_url,bio,instagram_account,twitter_account,linkedin_account,github_account,branch,division,created_at";
+  "id,email,full_name,avatar_url,bio,instagram_account,twitter_account,linkedin_account,github_account,branch,division,seeking_roommate,roommate_hostel_campus,roommate_gender,created_at";
 
 export const friendRequestSelect = "id,requester_id,receiver_id,status,created_at,responded_at";
 
