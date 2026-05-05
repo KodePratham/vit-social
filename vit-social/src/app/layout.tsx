@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,10 +30,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isVercelDeployment = process.env.VERCEL === "1";
+
   return (
     <html lang="en" className="h-full">
       <body className="m-0 min-h-full bg-[var(--fb-bg)] p-0 text-[var(--fb-text)] antialiased">
         {children}
+        {isVercelDeployment ? <Analytics /> : null}
       </body>
     </html>
   );
