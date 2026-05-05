@@ -194,7 +194,8 @@ This repo supports two targets. Use the guide that matches your host:
 
 - [Cloudflare Workers (OpenNext)](./vit-social/README.cloudflare.md) — the
   build must run `opennextjs-cloudflare`, **not** plain `next build`.
-- [Vercel](./vit-social/README.vercel.md) — standard Next.js build.
+- [Vercel](./vit-social/README.vercel.md) — standard Next.js build. Vercel
+  Analytics is enabled in-app only when running on Vercel.
 
 ### Custom domains
 

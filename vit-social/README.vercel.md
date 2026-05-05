@@ -26,6 +26,16 @@ Then in **Supabase → Authentication → URL configuration**:
 - Set **Site URL** to your Vercel production URL (and preview URL patterns if needed).
 - Add redirect URL: `https://<your-vercel-domain>/auth/callback`.
 
+## Vercel Analytics
+
+This repo includes [`@vercel/analytics`](https://vercel.com/docs/analytics) in the root App Router layout.
+
+- Analytics is rendered globally for all routes.
+- Rendering is gated to Vercel deployments (`process.env.VERCEL === "1"`), so local dev and Cloudflare-hosted builds won’t emit Vercel Analytics events.
+- Vercel preview and production deployments both set that env flag, so both are tracked.
+
+After deploying, you can smoke-check by opening the site and confirming the analytics request appears in the browser network tab.
+
 ## Custom domain
 
 Step-by-step: [Connect a custom domain on Vercel](./README.domain-vercel.md) (DNS, Supabase, Google origins).
