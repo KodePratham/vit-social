@@ -20,6 +20,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/profile", label: "Profile" },
   { href: "/friends", label: "Friends" },
   { href: "/find-roommate", label: "Roommate" },
+  { href: "/exams", label: "Exams" },
 ];
 
 export function SiteHeader({ userEmail, onSignOut, isBusy = false }: SiteHeaderProps) {

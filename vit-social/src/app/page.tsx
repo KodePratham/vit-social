@@ -299,6 +299,10 @@ export default function Home() {
               About
             </Link>
             <span className="mx-2 text-[color:var(--fb-blue-light)]">|</span>
+            <Link href="/exams" className="text-[color:var(--fb-link)] hover:underline">
+              Exams
+            </Link>
+            <span className="mx-2 text-[color:var(--fb-blue-light)]">|</span>
             <span className="text-[color:var(--fb-text-muted)]">For VIT students only</span>
           </p>
           <p className="m-0 mt-2 text-[color:var(--fb-text-muted)]">
