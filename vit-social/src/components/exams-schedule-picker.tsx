@@ -53,7 +53,6 @@ export function ExamsSchedulePicker() {
   }, [year]);
 
   const exams = scheduleKey ? getExamsForScheduleKey(scheduleKey) : undefined;
-  const selectionComplete = Boolean(year && scheduleKey && exams && exams.length > 0);
 
   return (
     <div className="space-y-6">
@@ -118,7 +117,7 @@ export function ExamsSchedulePicker() {
         </p>
       ) : null}
 
-      {selectionComplete ? (
+      {exams && exams.length > 0 ? (
         <article className="fb-panel overflow-hidden">
           <header className="fb-panel-header">
             <h2 className="m-0 text-[15px] font-bold text-[#0e385f]">Your exams</h2>
@@ -126,6 +125,8 @@ export function ExamsSchedulePicker() {
           </header>
           <ExamTable rows={exams} />
         </article>
+      ) : year && scheduleKey ? (
+        null
       ) : (
         <div
           className="fb-panel border border-dashed border-[color:var(--fb-panel-border)] bg-[#fafbfc] p-6 text-center text-sm text-[color:var(--fb-text-dim)]"
