@@ -25,6 +25,10 @@
   --fb-error-bg: #ffe4e1;
   --fb-error-border: rgba(228, 30, 63, 0.4);
   --fb-error-text: #7f1d1d;
+  --fb-logo-text: #1b3f7a;
+  --fb-logo-domain: #3f5f97;
+  --fb-logo-bg-top: #ffffff;
+  --fb-logo-bg-bottom: #e8eef8;
 }
 
 @theme inline {
@@ -207,6 +211,46 @@ a:hover {
 .fb-nav-link:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+/* Site wordmark in the blue header — light badge so it doesn't blend in. */
+.fb-site-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(to bottom, var(--fb-logo-bg-top) 0%, var(--fb-logo-bg-bottom) 100%);
+  color: var(--fb-logo-text);
+  text-decoration: none;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  transition:
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.fb-site-logo:hover {
+  background: linear-gradient(to bottom, #ffffff 0%, #f1f5fb 100%);
+  text-decoration: none;
+}
+
+.fb-site-logo:active {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.12),
+    0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+.fb-site-logo:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 2px;
+}
+
+.fb-site-logo-domain {
+  color: var(--fb-logo-domain);
 }
 
 /* Old-school "card" panel — white background, thin grey border, tiny shadow. */
