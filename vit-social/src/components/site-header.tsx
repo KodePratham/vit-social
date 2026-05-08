@@ -45,9 +45,9 @@ export function SiteHeader({ userEmail, onSignOut, isBusy = false }: SiteHeaderP
       <div className="mx-auto flex max-w-[980px] flex-wrap items-center justify-between gap-y-2 gap-x-3 px-2 py-2 sm:py-3">
         <Link
           href="/"
-          className="select-none whitespace-nowrap text-[1.4rem] font-bold leading-none tracking-[-0.5px] text-white no-underline hover:underline sm:text-[1.7rem]"
+          className="fb-site-logo select-none whitespace-nowrap text-[1.4rem] font-bold leading-none tracking-[-0.5px] sm:text-[1.7rem]"
         >
-          vitsocial<span className="font-normal">.xyz</span>
+          vitsocial<span className="fb-site-logo-domain font-normal">.xyz</span>
         </Link>
 
         <nav className="flex flex-wrap items-center justify-end gap-1.5">
