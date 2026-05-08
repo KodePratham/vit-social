@@ -85,3 +85,6 @@ temp/
 
 # Remotion launch-video sandbox (large deps / local renders — exclude from repo)
 html-assets/
+
+# Next app
+vit-social/notes/
